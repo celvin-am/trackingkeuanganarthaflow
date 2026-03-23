@@ -6,11 +6,13 @@ import { env } from './lib/env.js';
 import { requireAuth } from './middleware/auth.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
-// 🔥 IMPORT SEMUA ROUTER LO DISINI
+// 🔥 IMPORT SEMUA ROUTER (PENTING!)
 import { walletRouter } from './routes/wallet.route.js';
 import { transactionRouter } from './routes/transaction.route.js';
 import { dashboardRouter } from './routes/dashboard.route.js';
+import { budgetRouter } from './routes/budget.route.js';
 import { categoryRouter } from './routes/category.route.js';
+import { scanRouter } from './routes/scan.route.js';
 import { settingsRouter } from './routes/settings.route.js';
 
 const app = express();
@@ -22,26 +24,28 @@ app.use(cors({
   credentials: true,
 }));
 
-// Better Auth Handler
+// Better Auth
 app.all('/api/auth/*', toNodeHandler(auth));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' })); // Naikin limit buat upload gambar scan
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// API Health Check
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// Health Check
+app.get(['/', '/api/health'], (req, res) => res.json({ status: 'ok' }));
 
-// 🔥 PASANG ROUTE DISINI (Support jalur /api dan jalur root buat Vercel)
-const routes = [
+// 🔥 DAFTARKAN SEMUA RUTE DISINI
+const apiRoutes = [
   { path: '/wallets', router: walletRouter },
   { path: '/transactions', router: transactionRouter },
   { path: '/dashboard', router: dashboardRouter },
+  { path: '/budgets', router: budgetRouter },
   { path: '/categories', router: categoryRouter },
   { path: '/settings', router: settingsRouter },
+  { path: '/scan', router: scanRouter }, // <--- Ini biar OCR Gak 404 lagi!
 ];
 
-routes.forEach(route => {
-  // Kita pasang dua-duanya biar aman di lokal & vercel proxy
+apiRoutes.forEach(route => {
+  // Support /api/nama-rute (lokal) dan /nama-rute (vercel rewrite)
   app.use([`/api${route.path}`, route.path], requireAuth, route.router);
 });
 
