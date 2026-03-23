@@ -1,14 +1,13 @@
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  // Target ke /api/auth
-  baseURL: `${import.meta.env.VITE_API_URL}/auth`,
+  // 🔥 WAJIB: Pakai path relatif biar kena proxy vercel.json
+  baseURL: "/api/auth",
 
-  // 🔥 TAMBAHKAN INI: Wajib agar useSession bawa cookie lintas domain
   fetchOptions: {
+    // Biar useSession bawa cookie pas nembak ke API
     credentials: "include",
   },
-
   advanced: {
     cookiePrefix: "arthaflow"
   }

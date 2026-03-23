@@ -4,34 +4,28 @@ import { env } from './env.js';
 import { db } from './db.js';
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: 'pg',
-  }),
+  database: drizzleAdapter(db, { provider: 'pg' }),
 
-  baseURL: `https://arthaflow-web.vercel.app/api/auth`,
+  // 🔥 baseURL harus nembak domain WEB (karena lewat proxy)
+  baseURL: "https://arthaflow-web.vercel.app/api/auth",
 
   advanced: {
     cookiePrefix: "arthaflow",
-    crossSite: true,
     useSecureCookies: true,
+    cookieSameSite: "Lax", // Proxy bikin ini jadi Same-Site, jadi aman pake Lax
     cookiePath: "/",
+    // 🔥 WAJIB: Biar Better Auth percaya sama header dari Vercel Proxy
+    trustProxy: true,
   },
 
-  // Izin domain frontend lo
   trustedOrigins: ["https://arthaflow-web.vercel.app"],
 
-  emailAndPassword: {
-    enabled: true,
-  },
-
+  emailAndPassword: { enabled: true },
   socialProviders: {
-    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? {
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-        mapUserToProfile: true,
-        // Biarkan Better Auth handle rute callback secara internal
-      }
-    } : {})
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID!,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
+      mapUserToProfile: true,
+    }
   },
 });
