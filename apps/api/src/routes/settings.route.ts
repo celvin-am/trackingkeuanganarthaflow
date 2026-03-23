@@ -2,71 +2,60 @@ import { Router } from 'express';
 import { settingsService } from '../services/settings.service.js';
 import multer from 'multer';
 
-// 🔥 JANGAN pake diskStorage di Vercel! Pake memoryStorage.
+// 🔥 PAKE memoryStorage, jangan diskStorage!
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 4 * 1024 * 1024 } // Limit 4MB (Vercel max 4.5MB)
+  limits: { fileSize: 3 * 1024 * 1024 } // Limit 3MB biar gak kena limit Vercel
 });
 
 export const settingsRouter = Router();
 
-// Get user settings
+// Get settings
 settingsRouter.get('/', async (req, res, next) => {
   try {
     const settings = await settingsService.get(req.user!.id);
     res.json(settings);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// Update general settings
+// Update settings
 settingsRouter.patch('/', async (req, res, next) => {
   try {
     const settings = await settingsService.update(req.user!.id, req.body);
     res.json(settings);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// 🔥 FIX ERROR 500: Upload Foto Profil
+// 🔥 FIX MUTER-MUTER: Upload PP via Base64
 settingsRouter.patch('/profile-picture', upload.single('image'), async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image uploaded' });
-    }
+    if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
 
-    // Convert buffer gambar jadi Base64 String
+    // Convert file buffer ke Base64
     const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
-    // Simpen ke DB lewat service lo
+    // Simpan ke DB
     const updatedUser = await settingsService.updateProfilePicture(req.user!.id, base64Image);
 
-    res.json({ success: true, user: updatedUser });
+    // Kirim respon BIAR FRONTEND BERHENTI LOADING
+    return res.json({ success: true, user: updatedUser });
   } catch (err) {
     console.error("Upload Error:", err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Delete account
 settingsRouter.delete('/account', async (req, res, next) => {
   try {
     await settingsService.deleteAccount(req.user!.id);
     res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
 
-// Reset all data
 settingsRouter.post('/reset-data', async (req, res, next) => {
   try {
     await settingsService.resetData(req.user!.id);
     res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 });
