@@ -12,7 +12,12 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
-  // --- BARIS SAKTI PENYEMBUH INVALID ORIGIN ---
+  // Tambahkan ini Dra!
+  advanced: {
+    cookiePrefix: "arthaflow",
+    crossSite: true, // WAJIB buat antar domain vercel.app
+  },
+
   trustedOrigins: [env.FRONTEND_URL],
   // -------------------------------------------
 
