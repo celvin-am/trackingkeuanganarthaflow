@@ -8,7 +8,7 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
-  baseURL: `${env.BETTER_AUTH_URL}/api/auth`,
+  baseURL: `https://arthaflow-web.vercel.app/api/auth`,
 
   advanced: {
     cookiePrefix: "arthaflow",
@@ -18,7 +18,7 @@ export const auth = betterAuth({
   },
 
   // Izin domain frontend lo
-  trustedOrigins: [env.FRONTEND_URL],
+  trustedOrigins: ["https://arthaflow-web.vercel.app"],
 
   emailAndPassword: {
     enabled: true,
