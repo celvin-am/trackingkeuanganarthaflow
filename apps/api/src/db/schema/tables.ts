@@ -1,6 +1,6 @@
 import { pgEnum, pgTable, timestamp, varchar, uuid, numeric, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { user } from './auth';
+import { user } from './auth.js';
 
 export const walletTypeEnum = pgEnum('wallet_type', ['CASH', 'BANK', 'E_WALLET', 'INVESTMENT']);
 export const txTypeEnum = pgEnum('tx_type', ['INCOME', 'EXPENSE']);
