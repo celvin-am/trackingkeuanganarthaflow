@@ -20,6 +20,8 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // 1. CORS Configuration (must be before Better Auth)
 app.use(cors({
   origin: env.FRONTEND_URL,
@@ -59,7 +61,7 @@ app.use(errorHandler);
 const PORT = env.PORT;
 app.listen(PORT, () => {
   console.log(`🚀 ArthaFlow API is running on http://localhost:${PORT}`);
-  
+
   if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
     console.log('✅ Google Auth Provider: Active');
   } else {

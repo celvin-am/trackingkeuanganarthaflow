@@ -13,6 +13,8 @@ interface SettingsContextType {
   dateFormat: DateFormat;
   setDateFormat: (f: DateFormat) => void;
   formatDate: (date: Date | string | null | undefined) => string;
+  isLoading: boolean;
+  refreshSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -35,19 +37,30 @@ const formatMap: Record<DateFormat, string> = {
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [currency, setCurrencyState] = useState<Currency>('IDR');
   const [dateFormat, setDateFormatState] = useState<DateFormat>('DD/MM/YYYY');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fungsi fetch utama yang sudah di-crosscheck keamanannya
+  const fetchSettings = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiClient.get('/settings');
+      if (res.data) {
+        if (res.data.currency) setCurrencyState(res.data.currency as Currency);
+        if (res.data.dateFormat) setDateFormatState(res.data.dateFormat as DateFormat);
+      }
+    } catch (err: any) {
+      // CROSS-CHECK: Jika 401, abaikan saja (User memang belum login/public access)
+      if (err.response?.status === 401) {
+        console.log('ℹ️ Settings: User unauthenticated, using local defaults.');
+      } else {
+        console.error('❌ Settings: Error fetching from server', err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await apiClient.get('/settings');
-        if (res.data) {
-          if (res.data.currency) setCurrencyState(res.data.currency as Currency);
-          if (res.data.dateFormat) setDateFormatState(res.data.dateFormat as DateFormat);
-        }
-      } catch (err) {
-        console.error('Failed to load settings from server', err);
-      }
-    };
     fetchSettings();
   }, []);
 
@@ -94,13 +107,15 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <SettingsContext.Provider value={{ 
-      currency, 
-      setCurrency, 
-      formatCurrency, 
-      dateFormat, 
+    <SettingsContext.Provider value={{
+      currency,
+      setCurrency,
+      formatCurrency,
+      dateFormat,
       setDateFormat,
-      formatDate
+      formatDate,
+      isLoading,
+      refreshSettings: fetchSettings // Untuk dipanggil manual setelah login jika perlu
     }}>
       {children}
     </SettingsContext.Provider>

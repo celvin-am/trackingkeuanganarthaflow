@@ -67,7 +67,7 @@ export function Dashboard() {
       {/* Stats Grid */}
       <section className="grid grid-cols-4 gap-6">
         {/* Total Balance */}
-        <div 
+        <div
           onClick={() => navigate('/wallets')}
           className="bg-surface-container-lowest p-7 rounded-xl flex flex-col justify-between h-44 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20 border border-transparent"
         >
@@ -88,7 +88,7 @@ export function Dashboard() {
         </div>
 
         {/* Monthly Income */}
-        <div 
+        <div
           onClick={() => navigate('/transactions')}
           className="bg-surface-container-low p-7 rounded-xl flex flex-col justify-between h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-green-500/20 border border-transparent"
         >
@@ -109,7 +109,7 @@ export function Dashboard() {
         </div>
 
         {/* Monthly Expense */}
-        <div 
+        <div
           onClick={() => navigate('/transactions')}
           className="bg-surface-container-low p-7 rounded-xl flex flex-col justify-between h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-red-500/20 border border-transparent"
         >
@@ -130,7 +130,7 @@ export function Dashboard() {
         </div>
 
         {/* Health Score */}
-        <div 
+        <div
           onClick={() => navigate('/budgets')}
           className="bg-surface-container-lowest p-7 rounded-xl flex items-center justify-between h-44 shadow-sm border border-neutral-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20"
         >
@@ -173,13 +173,13 @@ export function Dashboard() {
           <div className="flex justify-between items-center mb-8">
             <h4 className="text-lg font-extrabold tracking-tight">{t('expenseDistribution')}</h4>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setActiveMenu(activeMenu === 'expense' ? null : 'expense')}
                 className={`hover:bg-neutral-100 rounded-full p-1 transition-colors ${activeMenu === 'expense' ? 'bg-neutral-100' : ''}`}
               >
                 <span className="material-symbols-outlined text-secondary text-[20px]">more_horiz</span>
               </button>
-              
+
               {activeMenu === 'expense' && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <button onClick={() => { alert('Exporting to CSV...'); setActiveMenu(null); }} className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3">
@@ -214,9 +214,9 @@ export function Dashboard() {
                       <Cell key={`cell-${index}`} fill={tailwindToHex(entry.categoryColor || entry.color)} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: any) => formatCurrency(Number(value))} 
+                    formatter={(value: any) => formatCurrency(Number(value))}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -269,10 +269,10 @@ export function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={balanceTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }} />
-                <Tooltip 
-                  cursor={{ fill: '#f3f4f6' }} 
+                <Tooltip
+                  cursor={{ fill: '#f3f4f6' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => formatCurrency(Number(value))} 
+                  formatter={(value: any) => formatCurrency(Number(value))}
                 />
                 <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} />
                 <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
@@ -290,19 +290,19 @@ export function Dashboard() {
             <p className="text-xs text-secondary mt-0.5">{t('realTimePortfolio')}</p>
           </div>
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={() => setSelectedRange('1W')}
               className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1W' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
             >
               1W
             </button>
-            <button 
+            <button
               onClick={() => setSelectedRange('1M')}
               className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1M' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
             >
               1M
             </button>
-            <button 
+            <button
               onClick={() => setSelectedRange('1Y')}
               className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1Y' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
             >
@@ -320,14 +320,14 @@ export function Dashboard() {
             <AreaChart data={balanceTrend} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: any) => formatCurrency(Number(value))} 
+                formatter={(value: any) => formatCurrency(Number(value))}
               />
               <Area type="monotone" dataKey="income" stroke="#9d4300" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
             </AreaChart>

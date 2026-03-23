@@ -22,16 +22,20 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
 
     // Prepare generative prompt
     const prompt = `
-      You are an expert financial receipt analyzer. 
-      Analyze this image of a receipt and extract the following information strictly in JSON format.
-      Do not include any Markdown wrapping (like \`\`\`json). Just the raw JSON object.
-      
-      Required JSON structure:
+      You are an expert financial receipt analyzer. Support all languages (especially Indonesian).
+      Analyze the image and extract ONLY a raw JSON object. No Markdown, no preamble.
+
+      RULES FOR NUMBERS:
+      - TOTAL AMOUNT: Extract the final "Grand Total" or "Total".
+      - If currency is IDR (Rp), dots (.) are THOUSAND separators. "143.000" MUST be 143000.
+      - Return "amount" as a pure NUMBER without dots or currency symbols.
+
+      JSON STRUCTURE:
       {
-        "merchant": "Name of the store or merchant",
-        "date": "Date of transaction in YYYY-MM-DD format (or leave empty if not found)",
-        "amount": Total final amount as a number (extract carefully from 'Total' or equivalent),
-        "description": "A short 3-word summary of what was bought based on items"
+        "merchant": "string",
+        "date": "YYYY-MM-DD",
+        "amount": number,
+        "description": "3-word summary of items"
       }
     `;
 
@@ -58,10 +62,10 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
     });
 
     const outputText = response.text || '';
-    
+
     // Clean potential markdown blocks if Gemini ignored the prompt
     const cleanedText = outputText.replace(/```json/g, '').replace(/```/g, '').trim();
-    
+
     let parsedData;
     try {
       parsedData = JSON.parse(cleanedText);

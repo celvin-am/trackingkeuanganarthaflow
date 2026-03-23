@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { authClient } from '../lib/auth';
 
 export function SignIn() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +22,9 @@ export function SignIn() {
       if (authError) {
         setError(authError.message || 'Failed to sign in');
       } else if (data) {
-        navigate('/dashboard');
+        // 🔥 PERBAIKAN TERVERIFIKASI: 
+        // Menggunakan Hard Redirect untuk sinkronisasi Cookie Session
+        window.location.href = '/dashboard';
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -68,7 +69,7 @@ export function SignIn() {
           <p className="text-sm text-secondary mt-1 mb-8">Sign in to your account to continue.</p>
 
           {/* Google Login */}
-          <button 
+          <button
             type="button"
             onClick={async () => {
               await authClient.signIn.social({
@@ -102,24 +103,24 @@ export function SignIn() {
             )}
             <div>
               <label className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com" 
-                className="w-full px-4 py-3 bg-surface-container-low border border-neutral-200 rounded-xl text-sm text-on-surface placeholder:text-neutral-400 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors" 
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 bg-surface-container-low border border-neutral-200 rounded-xl text-sm text-on-surface placeholder:text-neutral-400 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors"
               />
             </div>
             <div>
               <label className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••" 
-                className="w-full px-4 py-3 bg-surface-container-low border border-neutral-200 rounded-xl text-sm text-on-surface placeholder:text-neutral-400 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors" 
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-surface-container-low border border-neutral-200 rounded-xl text-sm text-on-surface placeholder:text-neutral-400 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-colors"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -129,8 +130,8 @@ export function SignIn() {
               </label>
               <a href="#" className="text-xs font-semibold text-primary-container hover:underline">Forgot password?</a>
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
               className="w-full py-3 bg-primary-container disabled:opacity-50 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
             >
