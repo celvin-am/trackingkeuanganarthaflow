@@ -20,8 +20,6 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
-export default app;
-
 app.set('trust proxy', 1);
 
 // 1. CORS Configuration (must be before Better Auth)
@@ -71,3 +69,5 @@ if (process.env.NODE_ENV !== 'production') {
     }
   });
 }
+
+export default app;
