@@ -12,9 +12,9 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "arthaflow",
     useSecureCookies: true,
-    cookieSameSite: "Lax", // Proxy bikin ini jadi Same-Site, jadi aman pake Lax
+    cookieSameSite: "Lax",
     cookiePath: "/",
-    // 🔥 WAJIB: Biar Better Auth percaya sama header dari Vercel Proxy
+    // 🔥 WAJIB: Biar Better Auth percaya sama header dari Proxy Vercel
     trustProxy: true,
   },
 

@@ -8,23 +8,30 @@ import { errorHandler } from './middleware/error.middleware.js';
 
 const app = express();
 
-// 1. Trust Proxy (Wajib buat Vercel HTTPS)
+// 1. Keamanan proxy untuk Vercel (PENTING!)
 app.set('trust proxy', 1);
 
-// 2. CORS (Izinkan domain web lo)
+// 2. Konfigurasi CORS
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
-// 3. Better Auth (Sebelum body parser)
+// 3. Better Auth Handler (Sebelum body parsers)
 app.all('/api/auth/*', toNodeHandler(auth));
 
-// 4. Body Parsers
+// 4. Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ... (sisanya rute API lo seperti biasa)
+// API Health Check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 5. Protected Routes
+app.use('/api/settings', requireAuth, (req, res) => res.json({ message: "Success!" }));
+// ... (rute lainnya)
 
 app.use(errorHandler);
 
