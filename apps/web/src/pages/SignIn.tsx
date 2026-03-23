@@ -22,8 +22,7 @@ export function SignIn() {
       if (authError) {
         setError(authError.message || 'Failed to sign in');
       } else if (data) {
-        // 🔥 PERBAIKAN TERVERIFIKASI: 
-        // Menggunakan Hard Redirect untuk sinkronisasi Cookie Session
+        // 🔥 Redirect keras ke dashboard untuk memastikan session terbaca
         window.location.href = '/dashboard';
       }
     } catch (err) {
@@ -70,10 +69,12 @@ export function SignIn() {
 
           {/* Google Login */}
           <button
+            id="google-signin-btn"
             type="button"
             onClick={async () => {
               await authClient.signIn.social({
                 provider: 'google',
+                // 🔥 Memastikan Google mengembalikan user ke domain frontend saat ini
                 callbackURL: `${window.location.origin}/dashboard`,
               });
             }}
@@ -102,8 +103,10 @@ export function SignIn() {
               </div>
             )}
             <div>
-              <label className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Email Address</label>
+              <label htmlFor="email" className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Email Address</label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 required
                 value={email}
@@ -113,8 +116,10 @@ export function SignIn() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Password</label>
+              <label htmlFor="password" title="password-label" className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-1.5">Password</label>
               <input
+                id="password"
+                name="password"
                 type="password"
                 required
                 value={password}
@@ -125,12 +130,13 @@ export function SignIn() {
             </div>
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-neutral-300 text-primary-container focus:ring-primary-container" />
+                <input id="remember" name="remember" type="checkbox" className="w-4 h-4 rounded border-neutral-300 text-primary-container focus:ring-primary-container" />
                 <span className="text-xs text-secondary">Remember me</span>
               </label>
               <a href="#" className="text-xs font-semibold text-primary-container hover:underline">Forgot password?</a>
             </div>
             <button
+              id="signin-submit-btn"
               type="submit"
               disabled={isLoading}
               className="w-full py-3 bg-primary-container disabled:opacity-50 text-white rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"

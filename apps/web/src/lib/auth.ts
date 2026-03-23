@@ -1,11 +1,15 @@
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  // Jika VITE_API_URL lo .../api, maka ini jadi .../api/auth
+  // Target ke /api/auth
   baseURL: `${import.meta.env.VITE_API_URL}/auth`,
 
+  // 🔥 TAMBAHKAN INI: Wajib agar useSession bawa cookie lintas domain
+  fetchOptions: {
+    credentials: "include",
+  },
+
   advanced: {
-    // 🔥 WAJIB: Harus sama persis dengan backend
     cookiePrefix: "arthaflow"
   }
 });

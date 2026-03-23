@@ -8,14 +8,12 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
-  // Target ke endpoint auth lengkap di backend
   baseURL: `${env.BETTER_AUTH_URL}/api/auth`,
 
   advanced: {
     cookiePrefix: "arthaflow",
     crossSite: true,
     useSecureCookies: true,
-    // 🔥 PENTING: Biar cookie bisa dibaca di seluruh folder /api
     cookiePath: "/",
   },
 
@@ -32,7 +30,7 @@ export const auth = betterAuth({
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
         mapUserToProfile: true,
-        // ❌ HAPUS callbackURL di sini. Biar dihandle otomatis oleh Better Auth internal.
+        // Biarkan Better Auth handle rute callback secara internal
       }
     } : {})
   },
