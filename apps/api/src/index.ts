@@ -6,7 +6,7 @@ import { env } from './lib/env.js';
 import { requireAuth } from './middleware/auth.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
-// Import routers
+// 🔥 IMPORT SEMUA ROUTER (PENTING!)
 import { walletRouter } from './routes/wallet.route.js';
 import { transactionRouter } from './routes/transaction.route.js';
 import { dashboardRouter } from './routes/dashboard.route.js';
@@ -27,14 +27,13 @@ app.use(cors({
 // Better Auth
 app.all('/api/auth/*', toNodeHandler(auth));
 
-// Payload limit gedein buat Base64
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '10mb' })); // Naikin limit buat upload gambar scan
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health Check
 app.get(['/', '/api/health'], (req, res) => res.json({ status: 'ok' }));
 
-// Routes Mapping
+// 🔥 DAFTARKAN SEMUA RUTE DISINI
 const apiRoutes = [
   { path: '/wallets', router: walletRouter },
   { path: '/transactions', router: transactionRouter },
@@ -42,10 +41,11 @@ const apiRoutes = [
   { path: '/budgets', router: budgetRouter },
   { path: '/categories', router: categoryRouter },
   { path: '/settings', router: settingsRouter },
-  { path: '/scan', router: scanRouter },
+  { path: '/scan', router: scanRouter }, // <--- Ini biar OCR Gak 404 lagi!
 ];
 
 apiRoutes.forEach(route => {
+  // Support /api/nama-rute (lokal) dan /nama-rute (vercel rewrite)
   app.use([`/api${route.path}`, route.path], requireAuth, route.router);
 });
 

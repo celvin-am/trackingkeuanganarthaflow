@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
+  // Paksa pakai path relatif biar kena Proxy vercel.json
   baseURL: '/api',
   withCredentials: true,
-  // 🔥 TAMBAHIN TIMEOUT: Stop muter setelah 15 detik
-  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,9 +12,8 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.code === 'ECONNABORTED') {
-      alert("Request timeout! Cek koneksi lo nyet.");
-    }
+    // Log error buat debug
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
