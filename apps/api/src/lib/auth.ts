@@ -8,18 +8,18 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
-  // 1. Pastikan baseURL nembak endpoint auth lengkap
+  // Target ke endpoint auth lengkap di backend
   baseURL: `${env.BETTER_AUTH_URL}/api/auth`,
 
   advanced: {
     cookiePrefix: "arthaflow",
     crossSite: true,
     useSecureCookies: true,
-    // 🔥 BARIS SAKTI: Biar cookie bisa dibaca di rute lain (kayak /api/settings)
+    // 🔥 PENTING: Biar cookie bisa dibaca di seluruh folder /api
     cookiePath: "/",
   },
 
-  // 2. Izin domain frontend
+  // Izin domain frontend lo
   trustedOrigins: [env.FRONTEND_URL],
 
   emailAndPassword: {
@@ -31,9 +31,8 @@ export const auth = betterAuth({
       google: {
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
-        // 🔥 BARIS SAKTI: Paksa Google balikin user ke WEB, bukan ke API
-        mapUserToProfile: true, // Kadang butuh ini buat konsistensi data
-        callbackURL: `${env.FRONTEND_URL}/dashboard`,
+        mapUserToProfile: true,
+        // ❌ HAPUS callbackURL di sini. Biar dihandle otomatis oleh Better Auth internal.
       }
     } : {})
   },

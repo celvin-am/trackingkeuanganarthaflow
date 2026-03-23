@@ -20,44 +20,34 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
-console.log("🔥 DEBUG: FRONTEND_URL is ->", env.FRONTEND_URL);
-console.log("🔥 DEBUG: NODE_ENV is ->", process.env.NODE_ENV);
-
-// Biar halaman depan nggak 404
-app.get('/', (req, res) => {
-  res.json({
-    message: "🚀 ArthaFlow API is Running!",
-    documentation: "https://github.com/celvin-am/trackingkeuanganarthaflow"
-  });
-});
-
-// Biar favicon nggak 404 (ngasih status 204 No Content aja)
-app.get('/favicon.ico', (req, res) => res.status(204).end());
-
+// Keamanan proxy untuk Vercel
 app.set('trust proxy', 1);
 
-// 1. CORS Configuration (must be before Better Auth)
+// 1. Konfigurasi CORS (Wajib di urutan pertama)
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
-// 2. Better Auth Handler (MUST BE BEFORE express.json())
+// 2. Better Auth Handler (Sebelum body parsers)
 app.all('/api/auth/*', toNodeHandler(auth));
 
-// 3. Built-in body parsers
+// 3. Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static uploads
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Rute dasar biar gak 404
+app.get('/', (req, res) => {
+  res.json({ message: "🚀 ArthaFlow API is Running!" });
+});
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // 4. API Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 5. Protected Application Routes
+// 5. Protected Routes
 app.use('/api/wallets', requireAuth, walletRouter);
 app.use('/api/transactions', requireAuth, transactionRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
@@ -68,20 +58,6 @@ app.use('/api/scan', requireAuth, scanRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 app.use('/api/recurring', requireAuth, recurringRouter);
 
-// 6. Global Error Handler
 app.use(errorHandler);
-
-// Start server
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`🚀 ArthaFlow API Ready!`);
-    console.log(`📡 Local: http://localhost:${PORT}`);
-
-    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-      console.log('✅ Google Auth Provider: Active');
-    }
-  });
-}
 
 export default app;
