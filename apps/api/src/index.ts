@@ -20,6 +20,9 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
+console.log("🔥 DEBUG: FRONTEND_URL is ->", env.FRONTEND_URL);
+console.log("🔥 DEBUG: NODE_ENV is ->", process.env.NODE_ENV);
+
 // Biar halaman depan nggak 404
 app.get('/', (req, res) => {
   res.json({
