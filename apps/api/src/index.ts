@@ -20,6 +20,17 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
+// Biar halaman depan nggak 404
+app.get('/', (req, res) => {
+  res.json({
+    message: "🚀 ArthaFlow API is Running!",
+    documentation: "https://github.com/celvin-am/trackingkeuanganarthaflow"
+  });
+});
+
+// Biar favicon nggak 404 (ngasih status 204 No Content aja)
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 app.set('trust proxy', 1);
 
 // 1. CORS Configuration (must be before Better Auth)
