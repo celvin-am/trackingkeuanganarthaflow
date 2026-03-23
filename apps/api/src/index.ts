@@ -20,21 +20,24 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
-// Keamanan proxy untuk Vercel
+// 1. Keamanan proxy untuk Vercel (Wajib buat baca header HTTPS)
 app.set('trust proxy', 1);
 
-// 1. Konfigurasi CORS (Wajib di urutan pertama)
+// 2. Konfigurasi CORS
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
-// 2. Better Auth Handler (Sebelum body parsers)
+// 3. Better Auth Handler (WAJIB sebelum body parsers)
 app.all('/api/auth/*', toNodeHandler(auth));
 
-// 3. Body parsers
+// 4. Body parsers (Ditaruh setelah Auth)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Rute dasar biar gak 404
 app.get('/', (req, res) => {
@@ -42,12 +45,12 @@ app.get('/', (req, res) => {
 });
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// 4. API Health Check
+// 5. API Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 5. Protected Routes
+// 6. Protected Routes (Semua rute di bawah ini wajib bawa Cookie)
 app.use('/api/wallets', requireAuth, walletRouter);
 app.use('/api/transactions', requireAuth, transactionRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
@@ -58,6 +61,15 @@ app.use('/api/scan', requireAuth, scanRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 app.use('/api/recurring', requireAuth, recurringRouter);
 
+// 7. Global Error Handler
 app.use(errorHandler);
 
+// 8. Jalankan server hanya di mode lokal (Development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(env.PORT, () => {
+    console.log(`🚀 ArthaFlow API Ready on port ${env.PORT}!`);
+  });
+}
+
+// Ekspor app untuk Vercel Serverless Functions
 export default app;
