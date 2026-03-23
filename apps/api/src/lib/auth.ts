@@ -12,6 +12,7 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
+  baseURL: env.BETTER_AUTH_URL,
   // Tambahkan ini Dra!
   advanced: {
     cookiePrefix: "arthaflow",
