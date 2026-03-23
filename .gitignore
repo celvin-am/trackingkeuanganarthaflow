@@ -5,3 +5,6 @@ node_modules/
 dist/
 build/
 .DS_Store
+.env
+apps/api/.env
+node_modules/
