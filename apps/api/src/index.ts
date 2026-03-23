@@ -6,32 +6,44 @@ import { env } from './lib/env.js';
 import { requireAuth } from './middleware/auth.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
+// 🔥 IMPORT SEMUA ROUTER LO DISINI
+import { walletRouter } from './routes/wallet.route.js';
+import { transactionRouter } from './routes/transaction.route.js';
+import { dashboardRouter } from './routes/dashboard.route.js';
+import { categoryRouter } from './routes/category.route.js';
+import { settingsRouter } from './routes/settings.route.js';
+
 const app = express();
 
-// 1. Keamanan proxy untuk Vercel (PENTING!)
 app.set('trust proxy', 1);
 
-// 2. Konfigurasi CORS
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
-// 3. Better Auth Handler (Sebelum body parsers)
+// Better Auth Handler
 app.all('/api/auth/*', toNodeHandler(auth));
 
-// 4. Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API Health Check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// 5. Protected Routes
-app.use('/api/settings', requireAuth, (req, res) => res.json({ message: "Success!" }));
-// ... (rute lainnya)
+// 🔥 PASANG ROUTE DISINI (Support jalur /api dan jalur root buat Vercel)
+const routes = [
+  { path: '/wallets', router: walletRouter },
+  { path: '/transactions', router: transactionRouter },
+  { path: '/dashboard', router: dashboardRouter },
+  { path: '/categories', router: categoryRouter },
+  { path: '/settings', router: settingsRouter },
+];
+
+routes.forEach(route => {
+  // Kita pasang dua-duanya biar aman di lokal & vercel proxy
+  app.use([`/api${route.path}`, route.path], requireAuth, route.router);
+});
 
 app.use(errorHandler);
 
