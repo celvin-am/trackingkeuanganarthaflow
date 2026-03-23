@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { wallets, categories, transactions, budgets, recurringTxns, receiptScans, userSettings } from './tables';
-import { user } from './auth';
+import { user } from './auth.js';
 
 export const userRelations = relations(user, ({ one, many }) => ({
   settings: one(userSettings, {
