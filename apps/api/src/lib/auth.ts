@@ -12,11 +12,12 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
 
-  baseURL: env.BETTER_AUTH_URL,
+  baseURL: `${env.BETTER_AUTH_URL}/api/auth`,
   // Tambahkan ini Dra!
   advanced: {
     cookiePrefix: "arthaflow",
     crossSite: true, // WAJIB buat antar domain vercel.app
+    useSecureCookies: true,
   },
 
   trustedOrigins: [env.FRONTEND_URL],
