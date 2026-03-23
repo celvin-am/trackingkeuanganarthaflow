@@ -20,6 +20,8 @@ import { recurringRouter } from './routes/recurring.route.js';
 
 const app = express();
 
+export default app;
+
 app.set('trust proxy', 1);
 
 // 1. CORS Configuration (must be before Better Auth)
@@ -58,13 +60,14 @@ app.use('/api/recurring', requireAuth, recurringRouter);
 app.use(errorHandler);
 
 // Start server
-const PORT = env.PORT;
-app.listen(PORT, () => {
-  console.log(`🚀 ArthaFlow API is running on http://localhost:${PORT}`);
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 ArthaFlow API Ready!`);
+    console.log(`📡 Local: http://localhost:${PORT}`);
 
-  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-    console.log('✅ Google Auth Provider: Active');
-  } else {
-    console.warn('⚠️ Google Auth Provider: Disabled (Check .env)');
-  }
-});
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+      console.log('✅ Google Auth Provider: Active');
+    }
+  });
+}

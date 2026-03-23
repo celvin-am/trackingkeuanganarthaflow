@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base Axios instance matching the Backend Express Server port
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   // Vitally important for Better Auth: ensure cookies (session_token) 
   // are always sent with every cross-origin request
   withCredentials: true,
