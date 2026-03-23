@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { wallets, categories, transactions, budgets, recurringTxns, receiptScans, userSettings } from './tables';
+import { wallets, categories, transactions, budgets, recurringTxns, receiptScans, userSettings } from './tables.js';
 import { user } from './auth.js';
 
 export const userRelations = relations(user, ({ one, many }) => ({
