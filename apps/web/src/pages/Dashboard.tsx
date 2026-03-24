@@ -61,11 +61,10 @@ export function Dashboard() {
     return mapping[twClass] || '#6b7280';
   };
 
-
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
-      <section className="grid grid-cols-4 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Balance */}
         <div
           onClick={() => navigate('/wallets')}
@@ -140,7 +139,7 @@ export function Dashboard() {
               {isLoading ? '-' : stats?.healthScore || 0}<span className="text-base text-neutral-400">/100</span>
             </h3>
             <span className="inline-flex items-center px-2 py-0.5 mt-2 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
-              {stats?.healthScore > 80 ? t('excellent') : stats?.healthScore > 50 ? t('good') : t('needsWork')}
+              {(stats?.healthScore || 0) > 80 ? t('excellent') : (stats?.healthScore || 0) > 50 ? t('good') : t('needsWork')}
             </span>
           </div>
           <div className="relative w-24 h-24">
@@ -154,7 +153,7 @@ export function Dashboard() {
                 r="40"
                 stroke="currentColor"
                 strokeDasharray="251.2"
-                strokeDashoffset="37.68"
+                strokeDashoffset={251.2 - (251.2 * (stats?.healthScore || 0)) / 100}
                 strokeWidth="8"
                 strokeLinecap="round"
               />
@@ -179,28 +178,27 @@ export function Dashboard() {
               >
                 <span className="material-symbols-outlined text-secondary text-[20px]">more_horiz</span>
               </button>
-
               {activeMenu === 'expense' && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <button onClick={() => { alert('Exporting to CSV...'); setActiveMenu(null); }} className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[18px]">table_view</span>
-                    Export as CSV
+                    <span className="material-symbols-outlined text-[18px]">table_view</span> Export as CSV
                   </button>
                   <button onClick={() => { navigate('/transactions'); setActiveMenu(null); }} className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3 border-t border-neutral-100">
-                    <span className="material-symbols-outlined text-[18px]">list_alt</span>
-                    View Details
+                    <span className="material-symbols-outlined text-[18px]">list_alt</span> View Details
                   </button>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] relative">
+
+          {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
+          <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] relative">
             {expenseDist.length === 0 && !isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center p-4">
                 <p className="text-sm font-bold text-secondary max-w-[200px]">{t('noData')}</p>
               </div>
             )}
-            <div className="relative w-[300px] h-[300px] flex-shrink-0 mx-auto">
+            <div className="relative w-[300px] h-[300px] min-w-[300px] min-h-[300px] flex-shrink-0 mx-auto">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -260,13 +258,15 @@ export function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="h-[300px] pt-4 w-full relative">
+
+          {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
+          <div className="h-[300px] min-h-[300px] pt-4 w-full relative">
             {balanceTrend.length === 0 && !isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
                 <p className="text-sm font-bold text-secondary">{t('noData')}</p>
               </div>
             )}
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={balanceTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }} />
                 <Tooltip
@@ -282,7 +282,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Balance Trend */}
+      {/* Balance Trend Area Chart */}
       <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden min-h-[450px]">
         <div className="flex justify-between items-center mb-8 relative z-10">
           <div>
@@ -290,33 +290,26 @@ export function Dashboard() {
             <p className="text-xs text-secondary mt-0.5">{t('realTimePortfolio')}</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedRange('1W')}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1W' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
-            >
-              1W
-            </button>
-            <button
-              onClick={() => setSelectedRange('1M')}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1M' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
-            >
-              1M
-            </button>
-            <button
-              onClick={() => setSelectedRange('1Y')}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === '1Y' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
-            >
-              1Y
-            </button>
+            {['1W', '1M', '1Y'].map((range) => (
+              <button
+                key={range}
+                onClick={() => setSelectedRange(range)}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === range ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
+              >
+                {range}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="h-[300px] relative">
+
+        {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
+        <div className="h-[300px] min-h-[300px] w-full relative">
           {balanceTrend.length === 0 && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
               <p className="text-sm font-bold text-secondary">{t('noData')}</p>
             </div>
           )}
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={balanceTrend} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
