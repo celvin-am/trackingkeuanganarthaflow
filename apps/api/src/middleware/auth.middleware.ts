@@ -30,14 +30,21 @@ declare global {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('=== AUTH DEBUG ===');
-    console.log('Cookie:', req.headers.cookie);
-    console.log('Authorization:', req.headers.authorization);
-    console.log('Origin:', req.headers.origin);
-    console.log('=================');
+    // ✅ Vercel proxy strips cookies cross-domain, so we read from Authorization header
+    // Frontend attaches "Authorization: Bearer <token>" via axios interceptor
+    const bearerToken = req.headers.authorization?.replace('Bearer ', '');
+
+    const headers: Record<string, string> = {
+      ...(req.headers as Record<string, string>),
+    };
+
+    // Better Auth supports bearer token via Authorization header natively
+    if (bearerToken) {
+      headers['authorization'] = `Bearer ${bearerToken}`;
+    }
 
     const session = await auth.api.getSession({
-      headers: req.headers as any,
+      headers: headers as any,
     });
 
     if (!session || !session.user) {

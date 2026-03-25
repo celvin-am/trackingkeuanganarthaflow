@@ -15,6 +15,11 @@ export const auth = betterAuth({
     trustProxy: true,
   },
 
+  // ✅ Enable Bearer token — fix untuk Vercel proxy yang strip cookie cross-domain
+  bearerAuth: {
+    enabled: true,
+  },
+
   oauthConfig: {
     skipStateCookieCheck: true,
   },
