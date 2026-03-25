@@ -10,7 +10,6 @@ export const auth = betterAuth({
   baseURL: "https://arthaflow-api.vercel.app/api/auth",
 
   advanced: {
-    cookiePrefix: "arthaflow",
     useSecureCookies: true,
     // 🔥 Ganti ke "None" biar Cookie bisa nyebrang dari API ke WEB
     cookieSameSite: "None",
