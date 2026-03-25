@@ -5,8 +5,7 @@ import { eq, and, sql, gte, sum, lte } from 'drizzle-orm';
 export const dashboardService = {
   async getStats(userId: string) {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    
+
     // Total Balance
     const [{ totalBalance }] = await db
       .select({ totalBalance: sum(wallets.balance) })
@@ -48,7 +47,7 @@ export const dashboardService = {
   async getHealthScore(userId: string) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
+
     // 1. Savings Ratio
     const statsResult = await db
       .select({
@@ -67,7 +66,6 @@ export const dashboardService = {
     }
 
     const savings = income - expense;
-    // Cap ratio between 0 and 1
     const savingsRatio = income > 0 ? Math.max(0, Math.min(savings / income, 1)) : 0;
 
     // 2. Budget Ratio
@@ -81,24 +79,22 @@ export const dashboardService = {
     const budgetRatio = totalBudget > 0 ? (remainingBudget / totalBudget) : 0;
 
     // 3. Consistency
-    // Days elapsed this month vs days with at least 1 transaction
     const daysElapsed = Math.max(1, now.getDate());
-    
+
+    // 🔥 FIX 1: Cast ke any dan hapus .rows
     const distinctDaysRes = await db.execute(sql`
       SELECT COUNT(DISTINCT DATE(date)) as count 
       FROM transaction 
       WHERE user_id = ${userId} 
       AND date >= ${startOfMonth.toISOString()}
-    `);
-    const activeDays = Number(distinctDaysRes.rows[0]?.count || 0);
+    `) as any;
+
+    const activeDays = Number(distinctDaysRes[0]?.count || 0);
     const consistency = Math.min(activeDays / daysElapsed, 1);
 
-    // Final Formula: (Savings/Income * 40%) + (Remaining/TotalBudget * 30%) + (Consistency * 30%)
     const score = (savingsRatio * 0.4) + (budgetRatio * 0.3) + (consistency * 0.3);
-    
-    // Convert to 100-based scale
     const finalScore = Math.round(score * 100);
-    // If absolutely no data exists, emit neutral 50, otherwise return calculated base
+
     return (income === 0 && expense === 0 && totalBudget === 0) ? 50 : finalScore;
   },
 
@@ -135,7 +131,7 @@ export const dashboardService = {
     let interval = '29 days';
     let step = '1 day';
     let format = 'DD Mon';
-    
+
     if (range === '1W') {
       interval = '6 days';
       step = '1 day';
@@ -146,6 +142,7 @@ export const dashboardService = {
       format = 'Mon YY';
     }
 
+    // 🔥 FIX 2: Cast ke any dan hapus .rows
     const result = await db.execute(sql`
       WITH date_series AS (
         SELECT generate_series(
@@ -164,9 +161,9 @@ export const dashboardService = {
         AND t.user_id = ${userId}
       GROUP BY ds.date, period
       ORDER BY ds.date ASC
-    `);
+    `) as any;
 
-    const rows = result.rows || [];
+    const rows = Array.isArray(result) ? result : [];
     return rows.map((r: any) => ({
       month: String(r.period || ''),
       income: Number(r.income || 0),
