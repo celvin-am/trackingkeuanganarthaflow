@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://arthaflow-api.vercel.app/api/:path*"
+            "destination": "https://api-arthaflow.celvinandra.my.id/api/:path*"
         },
         {
             "source": "/((?!api/).*)",
