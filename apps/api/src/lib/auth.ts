@@ -7,7 +7,9 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
 
   // 🔥 baseURL HARUS nembak domain API lo sendiri (Bukan WEB!)
-  baseURL: "https://arthaflow-api.vercel.app/api/auth",
+  baseURL: "https://arthaflow-api.vercel.app",
+
+  secret: env.BETTER_AUTH_SECRET,
 
   advanced: {
     useSecureCookies: true,
