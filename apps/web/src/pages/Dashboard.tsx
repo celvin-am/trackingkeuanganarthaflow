@@ -2,9 +2,25 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { apiClient } from '../lib/api-client';
 import { useSettings } from '../lib/SettingsContext';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../lib/LanguageContext';
+import { useSession } from '../lib/auth';
+
+// ─── Debounce Hook ────────────────────────────────────────────────────────────
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+// ─── Skeleton Component ───────────────────────────────────────────────────────
+function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`bg-neutral-200 animate-pulse rounded ${className}`} style={style} />;
+}
 
 export function Dashboard() {
   const { formatCurrency } = useSettings();
@@ -12,49 +28,80 @@ export function Dashboard() {
   const { t } = useLanguage();
   const [selectedRange, setSelectedRange] = useState('1M');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // --- OPTIMIZED QUERIES ---
+  // ─── Debounce range selector (300ms) ────────────────────────────────────────
+  // Mencegah API spam saat user klik cepat 1W → 1M → 1Y
+  const debouncedRange = useDebounce(selectedRange, 300);
 
-  // 1. Stats Query - Cache 5 menit biar gak spam API tiap buka Dashboard
-  const { data: stats, isLoading } = useQuery({
+  // ─── Session Guard ───────────────────────────────────────────────────────────
+  // Semua query diblokir sampai session confirmed, mencegah 401 storm
+  const { data: sessionData, isPending: sessionLoading } = useSession();
+  const isAuthenticated = !!sessionData?.user && !sessionLoading;
+
+  // ─── Close menu on outside click ────────────────────────────────────────────
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setActiveMenu(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ─── Query 1: Stats ──────────────────────────────────────────────────────────
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await apiClient.get('/dashboard/stats');
       return res.data;
     },
-    staleTime: 5 * 60 * 1000, // Data dianggap fresh selama 5 menit
-    gcTime: 10 * 60 * 1000,   // Cache disimpan di memori 10 menit
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: isAuthenticated, // ✅ Tunggu session dulu
+    retry: 1,
   });
 
-  // 2. Expense Distribution
-  const { data: expenseDist = [] } = useQuery({
+  // ─── Query 2: Expense Distribution ──────────────────────────────────────────
+  const { data: expenseDist = [], isLoading: expenseLoading } = useQuery({
     queryKey: ['dashboard-expense-dist'],
     queryFn: async () => {
       const date = new Date();
-      const res = await apiClient.get(`/dashboard/expense-distribution?month=${date.getMonth() + 1}&year=${date.getFullYear()}`);
+      const res = await apiClient.get(
+        `/dashboard/expense-distribution?month=${date.getMonth() + 1}&year=${date.getFullYear()}`
+      );
       return res.data;
     },
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: isAuthenticated, // ✅
+    retry: 1,
   });
 
-  // 3. Balance Trend - Pake keepPreviousData biar grafik gak ilang pas loading
-  const { data: balanceTrend = [] } = useQuery({
-    queryKey: ['dashboard-balance-trend', selectedRange],
+  // ─── Query 3: Balance Trend (pakai debouncedRange) ──────────────────────────
+  const { data: balanceTrend = [], isLoading: trendLoading } = useQuery({
+    queryKey: ['dashboard-balance-trend', debouncedRange], // ✅ debounced, bukan selectedRange langsung
     queryFn: async () => {
-      const res = await apiClient.get(`/dashboard/balance-trend?range=${selectedRange}`);
+      const res = await apiClient.get(`/dashboard/balance-trend?range=${debouncedRange}`);
       return res.data;
     },
     staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData, // 🔥 Efek "Debounce" UI: Grafik lama tetep tampil sampe data baru siap
+    gcTime: 10 * 60 * 1000,
+    placeholderData: keepPreviousData, // ✅ Grafik lama tetap tampil saat loading
+    enabled: isAuthenticated, // ✅
+    retry: 1,
   });
 
-  // --- HELPERS ---
+  // ─── Derived loading state ───────────────────────────────────────────────────
+  const isLoading = statsLoading || !isAuthenticated;
 
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
   const totalExpense = useMemo(() => {
     return expenseDist.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
   }, [expenseDist]);
 
-  const tailwindToHex = (twClass: string) => {
+  const tailwindToHex = (twClass: string): string => {
     const mapping: Record<string, string> = {
       'bg-red-500': '#ef4444',
       'bg-blue-500': '#3b82f6',
@@ -71,10 +118,22 @@ export function Dashboard() {
     return mapping[twClass] || '#6b7280';
   };
 
+  // ─── Full page loading (saat session belum siap) ─────────────────────────────
+  if (sessionLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
-      {/* Stats Grid */}
+
+      {/* ── Stats Grid ─────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
         {/* Total Balance */}
         <div
           onClick={() => navigate('/wallets')}
@@ -87,11 +146,10 @@ export function Dashboard() {
             </div>
           </div>
           <div>
-            {isLoading ? (
-              <div className="h-8 w-32 bg-neutral-200 animate-pulse rounded"></div>
-            ) : (
-              <h3 className="text-2xl font-extrabold text-primary tracking-tighter">{formatCurrency(stats?.totalBalance)}</h3>
-            )}
+            {isLoading
+              ? <Skeleton className="h-8 w-32" />
+              : <h3 className="text-2xl font-extrabold text-primary tracking-tighter">{formatCurrency(stats?.totalBalance)}</h3>
+            }
             <p className="text-[10px] text-neutral-400 mt-1">{t('realTimePortfolio')}</p>
           </div>
         </div>
@@ -108,11 +166,10 @@ export function Dashboard() {
             </div>
           </div>
           <div>
-            {isLoading ? (
-              <div className="h-8 w-32 bg-neutral-200 animate-pulse rounded"></div>
-            ) : (
-              <h3 className="text-2xl font-extrabold text-green-500 tracking-tighter">{formatCurrency(stats?.monthlyIncome)}</h3>
-            )}
+            {isLoading
+              ? <Skeleton className="h-8 w-32" />
+              : <h3 className="text-2xl font-extrabold text-green-500 tracking-tighter">{formatCurrency(stats?.monthlyIncome)}</h3>
+            }
             <p className="text-[10px] text-neutral-400 mt-1">{t('thisMonthEarnings')}</p>
           </div>
         </div>
@@ -129,11 +186,10 @@ export function Dashboard() {
             </div>
           </div>
           <div>
-            {isLoading ? (
-              <div className="h-8 w-32 bg-neutral-200 animate-pulse rounded"></div>
-            ) : (
-              <h3 className="text-2xl font-extrabold text-red-500 tracking-tighter">{formatCurrency(stats?.monthlyExpense)}</h3>
-            )}
+            {isLoading
+              ? <Skeleton className="h-8 w-32" />
+              : <h3 className="text-2xl font-extrabold text-red-500 tracking-tighter">{formatCurrency(stats?.monthlyExpense)}</h3>
+            }
             <p className="text-[10px] text-neutral-400 mt-1">{t('thisMonthSpending')}</p>
           </div>
         </div>
@@ -146,7 +202,8 @@ export function Dashboard() {
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">{t('healthScore')}</span>
             <h3 className="text-2xl font-extrabold text-on-surface mt-4 tracking-tighter">
-              {isLoading ? '-' : stats?.healthScore || 0}<span className="text-base text-neutral-400">/100</span>
+              {isLoading ? <Skeleton className="h-8 w-16 inline-block" /> : (stats?.healthScore || 0)}
+              <span className="text-base text-neutral-400">/100</span>
             </h3>
             <span className="inline-flex items-center px-2 py-0.5 mt-2 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
               {(stats?.healthScore || 0) > 80 ? t('excellent') : (stats?.healthScore || 0) > 50 ? t('good') : t('needsWork')}
@@ -157,8 +214,7 @@ export function Dashboard() {
               <circle className="text-neutral-100" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" strokeWidth="8" />
               <circle
                 className="text-green-500"
-                cx="48"
-                cy="48"
+                cx="48" cy="48"
                 fill="transparent"
                 r="40"
                 stroke="currentColor"
@@ -175,13 +231,14 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Charts Grid */}
+      {/* ── Charts Grid ────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-12 gap-6">
+
         {/* Expense Distribution */}
         <div className="col-span-12 lg:col-span-5 bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[450px]">
           <div className="flex justify-between items-center mb-8">
             <h4 className="text-lg font-extrabold tracking-tight">{t('expenseDistribution')}</h4>
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setActiveMenu(activeMenu === 'expense' ? null : 'expense')}
                 className={`hover:bg-neutral-100 rounded-full p-1 transition-colors ${activeMenu === 'expense' ? 'bg-neutral-100' : ''}`}
@@ -190,10 +247,16 @@ export function Dashboard() {
               </button>
               {activeMenu === 'expense' && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <button onClick={() => { alert('Exporting to CSV...'); setActiveMenu(null); }} className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3">
+                  <button
+                    onClick={() => { alert('Exporting to CSV...'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3"
+                  >
                     <span className="material-symbols-outlined text-[18px]">table_view</span> Export as CSV
                   </button>
-                  <button onClick={() => { navigate('/transactions'); setActiveMenu(null); }} className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3 border-t border-neutral-100">
+                  <button
+                    onClick={() => { navigate('/transactions'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-neutral-50 flex items-center gap-3 border-t border-neutral-100"
+                  >
                     <span className="material-symbols-outlined text-[18px]">list_alt</span> View Details
                   </button>
                 </div>
@@ -202,7 +265,14 @@ export function Dashboard() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] relative">
-            {expenseDist.length === 0 && !isLoading && (
+            {/* Loading skeleton chart */}
+            {expenseLoading && (
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <Skeleton className="w-[160px] h-[160px] rounded-full" />
+              </div>
+            )}
+            {/* No data */}
+            {!expenseLoading && expenseDist.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center p-4">
                 <p className="text-sm font-bold text-secondary max-w-[200px]">{t('noData')}</p>
               </div>
@@ -211,13 +281,22 @@ export function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={expenseDist.length > 0 ? expenseDist.map((d: any) => ({ ...d, value: Number(d.amount) })) : [{ categoryName: 'No Data', value: 1, color: 'bg-gray-100' }]}
+                    data={
+                      expenseDist.length > 0
+                        ? expenseDist.map((d: any) => ({ ...d, value: Number(d.amount) }))
+                        : [{ categoryName: 'No Data', value: 1, color: 'bg-gray-100' }]
+                    }
                     innerRadius={60}
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    animationBegin={0}
+                    animationDuration={600}
                   >
-                    {(expenseDist.length > 0 ? expenseDist : [{ categoryName: 'No Data', value: 1, color: 'bg-gray-100' }]).map((entry: any, index: number) => (
+                    {(expenseDist.length > 0
+                      ? expenseDist
+                      : [{ categoryName: 'No Data', value: 1, color: 'bg-gray-100' }]
+                    ).map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={tailwindToHex(entry.categoryColor || entry.color)} stroke="none" />
                     ))}
                   </Pie>
@@ -238,7 +317,7 @@ export function Dashboard() {
                 return (
                   <div key={item.categoryName} className="flex items-center justify-between group cursor-default">
                     <div className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: item.categoryColor || '#cbd5e1' }} />
+                      <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: tailwindToHex(item.categoryColor) || '#cbd5e1' }} />
                       <span className="text-[13px] font-bold text-on-surface truncate max-w-[120px]">{item.categoryName}</span>
                     </div>
                     <div className="text-right">
@@ -269,7 +348,14 @@ export function Dashboard() {
           </div>
 
           <div className="h-[300px] min-h-[300px] pt-4 w-full relative">
-            {balanceTrend.length === 0 && !isLoading && (
+            {trendLoading && (
+              <div className="absolute inset-0 flex items-end gap-2 px-4 pb-4 z-10">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="flex-1" style={{ height: `${40 + Math.random() * 60}%` } as any} />
+                ))}
+              </div>
+            )}
+            {!trendLoading && balanceTrend.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
                 <p className="text-sm font-bold text-secondary">{t('noData')}</p>
               </div>
@@ -282,27 +368,31 @@ export function Dashboard() {
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   formatter={(value: any) => formatCurrency(Number(value))}
                 />
-                <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} animationDuration={600} />
+                <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} animationDuration={600} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </section>
 
-      {/* Balance Trend Area Chart */}
+      {/* ── Balance Trend Area Chart ────────────────────────────────────────────── */}
       <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden min-h-[450px]">
         <div className="flex justify-between items-center mb-8 relative z-10">
           <div>
             <h4 className="text-lg font-extrabold tracking-tight">{t('balanceTrend')}</h4>
             <p className="text-xs text-secondary mt-0.5">{t('realTimePortfolio')}</p>
           </div>
+          {/* Range selector — debounced 300ms, UI update instant */}
           <div className="flex gap-2">
-            {['1W', '1M', '1Y'].map((range) => (
+            {(['1W', '1M', '1Y'] as const).map((range) => (
               <button
                 key={range}
-                onClick={() => setSelectedRange(range)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === range ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-neutral-100 hover:bg-neutral-200'}`}
+                onClick={() => setSelectedRange(range)} // UI update instant
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === range
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'bg-neutral-100 hover:bg-neutral-200'
+                  }`}
               >
                 {range}
               </button>
@@ -311,7 +401,13 @@ export function Dashboard() {
         </div>
 
         <div className="h-[300px] min-h-[300px] w-full relative">
-          {balanceTrend.length === 0 && !isLoading && (
+          {/* Loading indicator saat range berganti (debounce aktif) */}
+          {trendLoading && debouncedRange !== selectedRange && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+            </div>
+          )}
+          {!trendLoading && balanceTrend.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
               <p className="text-sm font-bold text-secondary">{t('noData')}</p>
             </div>
@@ -329,11 +425,20 @@ export function Dashboard() {
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 formatter={(value: any) => formatCurrency(Number(value))}
               />
-              <Area type="monotone" dataKey="income" stroke="#9d4300" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="#9d4300"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorIncome)"
+                animationDuration={600}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </section>
+
     </div>
   );
 }
