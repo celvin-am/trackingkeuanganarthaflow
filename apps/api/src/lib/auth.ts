@@ -13,6 +13,8 @@ export const auth = betterAuth({
     cookieSameSite: "None",
     cookiePath: "/",
     trustProxy: true,
+    // ✅ Prevent duplicate cookies dengan SameSite berbeda
+    disableCSRFCheck: true,
   },
 
   // ✅ Enable Bearer token — fix untuk Vercel proxy yang strip cookie cross-domain

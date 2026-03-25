@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { authClient } from './auth'; // ✅ sesuai path auth.ts kamu di web/src/lib/auth.ts
 
 export const apiClient = axios.create({
   baseURL: '/api',
@@ -10,12 +9,18 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  const session = await authClient.getSession();
-  const token = session?.data?.session?.token;
-  console.log('Session token:', token ? 'ADA' : 'KOSONG');
-  console.log('Session data:', JSON.stringify(session?.data?.session));
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+  try {
+    // Fetch langsung ke API, bypass cookie browser
+    const res = await fetch('https://arthaflow-api.vercel.app/api/auth/get-session', {
+      credentials: 'include',
+    });
+    const data = await res.json();
+    const token = data?.session?.token;
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // silent fail
   }
   return config;
 });
