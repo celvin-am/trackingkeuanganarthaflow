@@ -21,9 +21,9 @@ export const auth = betterAuth({
     enabled: true,
   },
 
-  trustedOrigins: [
+  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',') || [
     "https://arthaflow.celvinandra.my.id",
-    "https://api-arthaflow.celvinandra.my.id",
+    "https://api-arthaflow.celvinandra.my.id"
   ],
 
   socialProviders: {
