@@ -15,9 +15,6 @@ export const auth = betterAuth({
     trustProxy: true,
   },
 
-  // ✅ FIX state mismatch — karena web dan API beda domain,
-  // signed cookie state tidak bisa ikut ke callback.
-  // State tetap divalidasi via database (verification table).
   oauthConfig: {
     skipStateCookieCheck: true,
   },
@@ -28,10 +25,19 @@ export const auth = betterAuth({
   ],
 
   emailAndPassword: { enabled: true },
+
   socialProviders: {
     google: {
       clientId: env.GOOGLE_CLIENT_ID!,
       clientSecret: env.GOOGLE_CLIENT_SECRET!,
+      // ✅ FIX: Simpan URL foto, bukan base64
+      // Tanpa ini Better Auth download foto dan simpan sebagai base64 (400KB+!)
+      mapProfileToUser: (profile) => ({
+        name: profile.name,
+        email: profile.email,
+        emailVerified: profile.email_verified ?? false,
+        image: profile.picture ?? null, // ✅ URL langsung dari Google
+      }),
     }
   },
 });
