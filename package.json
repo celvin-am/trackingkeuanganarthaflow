@@ -16,6 +16,6 @@
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.5.5",
     "drizzle-orm": "^0.45.1",
-    "pg": "^8.20.0"
+    "postgres": "^3.4.8"
   }
 }

@@ -1,10 +1,13 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import { env } from './env.js';
 import * as schema from '../db/schema/index.js';
 
-const pool = new pg.Pool({
-  connectionString: env.DATABASE_URL,
+const client = postgres(env.DATABASE_URL, {
+  max: 1,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  prepare: false,
 });
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(client, { schema });
