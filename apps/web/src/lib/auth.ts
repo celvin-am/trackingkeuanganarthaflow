@@ -1,13 +1,8 @@
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  // 🔥 FIX BLANK SCREEN: Pakai window.location.origin biar URL valid
-  baseURL: typeof window !== "undefined"
-    ? window.location.origin + "/api/auth"
-    : "https://arthaflow-web.vercel.app/api/auth",
-
+  baseURL: "https://arthaflow-api.vercel.app", // ✅ Nembak ke API, bukan web
   fetchOptions: {
-    // 🔥 PENTING: Wajib bawa cookie lintas request
     credentials: "include",
   },
   advanced: {
