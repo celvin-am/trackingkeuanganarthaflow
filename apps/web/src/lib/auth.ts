@@ -6,7 +6,7 @@ export const authClient = createAuthClient({
     credentials: "include",
   },
   advanced: {
-    cookiePrefix: "arthaflow"
+    cookiePrefix: "arthaflow-v2"
   }
 });
 
