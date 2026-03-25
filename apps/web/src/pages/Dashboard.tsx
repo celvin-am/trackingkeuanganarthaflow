@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { apiClient } from '../lib/api-client';
 import { useSettings } from '../lib/SettingsContext';
@@ -10,35 +10,45 @@ export function Dashboard() {
   const { formatCurrency } = useSettings();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [selectedRange, setSelectedRange] = useState('1M');
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
+  // --- OPTIMIZED QUERIES ---
+
+  // 1. Stats Query - Cache 5 menit biar gak spam API tiap buka Dashboard
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await apiClient.get('/dashboard/stats');
       return res.data;
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Data dianggap fresh selama 5 menit
+    gcTime: 10 * 60 * 1000,   // Cache disimpan di memori 10 menit
   });
 
+  // 2. Expense Distribution
   const { data: expenseDist = [] } = useQuery({
     queryKey: ['dashboard-expense-dist'],
     queryFn: async () => {
       const date = new Date();
       const res = await apiClient.get(`/dashboard/expense-distribution?month=${date.getMonth() + 1}&year=${date.getFullYear()}`);
       return res.data;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
-  const [selectedRange, setSelectedRange] = useState('1M');
-
+  // 3. Balance Trend - Pake keepPreviousData biar grafik gak ilang pas loading
   const { data: balanceTrend = [] } = useQuery({
     queryKey: ['dashboard-balance-trend', selectedRange],
     queryFn: async () => {
       const res = await apiClient.get(`/dashboard/balance-trend?range=${selectedRange}`);
       return res.data;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData, // 🔥 Efek "Debounce" UI: Grafik lama tetep tampil sampe data baru siap
   });
 
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  // --- HELPERS ---
 
   const totalExpense = useMemo(() => {
     return expenseDist.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
@@ -191,7 +201,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
           <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] relative">
             {expenseDist.length === 0 && !isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center p-4">
@@ -259,7 +268,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
           <div className="h-[300px] min-h-[300px] pt-4 w-full relative">
             {balanceTrend.length === 0 && !isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
@@ -302,7 +310,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* 🔥 FIX: Ditambahkan h-[300px] & min-h-[300px] */}
         <div className="h-[300px] min-h-[300px] w-full relative">
           {balanceTrend.length === 0 && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center">
