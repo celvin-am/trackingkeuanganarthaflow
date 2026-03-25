@@ -9,11 +9,11 @@ export const apiClient = axios.create({
   },
 });
 
-// ✅ Attach Bearer token ke setiap request
-// Fix untuk Vercel proxy yang strip cookie cross-domain
 apiClient.interceptors.request.use(async (config) => {
   const session = await authClient.getSession();
   const token = session?.data?.session?.token;
+  console.log('Session token:', token ? 'ADA' : 'KOSONG');
+  console.log('Session data:', JSON.stringify(session?.data?.session));
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
