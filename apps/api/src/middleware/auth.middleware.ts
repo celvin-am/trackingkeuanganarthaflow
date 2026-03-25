@@ -30,6 +30,12 @@ declare global {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('=== AUTH DEBUG ===');
+    console.log('Cookie:', req.headers.cookie);
+    console.log('Authorization:', req.headers.authorization);
+    console.log('Origin:', req.headers.origin);
+    console.log('=================');
+
     const session = await auth.api.getSession({
       headers: req.headers as any,
     });
