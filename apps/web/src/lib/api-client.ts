@@ -1,34 +1,21 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: '/api',
+  // 🔥 Markas API baru lo
+  baseURL: 'https://api-arthaflow.celvinandra.my.id/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-apiClient.interceptors.request.use(async (config) => {
-  try {
-    // Fetch langsung ke API, bypass cookie browser
-    const res = await fetch('https://arthaflow-api.vercel.app/api/auth/get-session', {
-      credentials: 'include',
-    });
-    const data = await res.json();
-    const token = data?.session?.token;
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-  } catch (e) {
-    // silent fail
-  }
-  return config;
-});
-
+// ✅ Gak perlu fetch manual lagi! Kookie otomatis nempel karena domainnya sama.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      console.warn('Sesi habis, silakan login ulang.');
+    }
     return Promise.reject(error);
   }
 );

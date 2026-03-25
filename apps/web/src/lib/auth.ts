@@ -1,12 +1,13 @@
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  baseURL: "https://arthaflow-api.vercel.app", // ✅ Nembak ke API, bukan web
+  baseURL: "https://api-arthaflow.celvinandra.my.id ", // ✅ Nembak ke API, bukan web
   fetchOptions: {
     credentials: "include",
   },
   advanced: {
-    cookiePrefix: "arthaflow-v2"
+    cookiePrefix: "arthaflow-v1",
+    cookieDomain: ".celvinandra.my.id"
   }
 });
 
