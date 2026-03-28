@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { auth } from './lib/auth.js';
+import { betterAuth } from 'better-auth';
 
 const app = express();
 
@@ -9,9 +9,9 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with auth import ok',
+    message: 'health with better-auth package import ok',
     time: new Date().toISOString(),
-    authLoaded: !!auth,
+    betterAuthLoaded: typeof betterAuth === 'function',
   });
 });
 
