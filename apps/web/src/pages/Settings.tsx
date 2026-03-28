@@ -88,8 +88,9 @@ export function Settings() {
       if (res.data?.success) {
         window.location.reload();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload failed', err);
+      console.error('Upload response:', err?.response?.data);
       alert('Gagal mengunggah foto profil.');
     } finally {
       setIsUploading(false);
@@ -191,35 +192,14 @@ export function Settings() {
   };
 
   const icons = [
-    'restaurant',
-    'directions_car',
-    'shopping_bag',
-    'memory',
-    'payments',
-    'local_hospital',
-    'fitness_center',
-    'school',
-    'flight',
-    'movie',
-    'home',
-    'work',
-    'star',
-    'favorite',
-    'category',
+    'restaurant', 'directions_car', 'shopping_bag', 'memory', 'payments',
+    'local_hospital', 'fitness_center', 'school', 'flight', 'movie',
+    'home', 'work', 'star', 'favorite', 'category',
   ];
 
   const colors = [
-    'bg-red-500',
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-yellow-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-orange-500',
-    'bg-indigo-500',
-    'bg-teal-500',
-    'bg-cyan-500',
-    'bg-gray-500',
+    'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500',
+    'bg-pink-500', 'bg-orange-500', 'bg-indigo-500', 'bg-teal-500', 'bg-cyan-500', 'bg-gray-500',
   ];
 
   const profileImageSrc =
@@ -247,25 +227,15 @@ export function Settings() {
             <h3 className="text-lg font-extrabold text-on-surface">{t('profile')}</h3>
             {isEditing ? (
               <div className="flex gap-4">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="text-sm font-bold text-secondary hover:underline"
-                >
+                <button onClick={() => setIsEditing(false)} className="text-sm font-bold text-secondary hover:underline">
                   {t('cancel')}
                 </button>
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="text-sm font-bold text-primary hover:underline"
-                >
+                <button onClick={handleSaveProfile} disabled={isSaving} className="text-sm font-bold text-primary hover:underline">
                   {isSaving ? t('loading') : t('saveChanges')}
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="text-sm font-bold text-primary hover:underline"
-              >
+              <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-primary hover:underline">
                 {t('edit')} {t('profile')}
               </button>
             )}
@@ -277,11 +247,7 @@ export function Settings() {
                 {isUploading ? (
                   <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
                 ) : profileImageSrc ? (
-                  <img
-                    src={profileImageSrc}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={profileImageSrc} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <span className="material-symbols-outlined text-primary text-[40px]">person</span>
                 )}
@@ -356,9 +322,7 @@ export function Settings() {
           </div>
 
           <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-              Preview Format
-            </span>
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Preview Format</span>
             <p className="text-2xl font-black text-primary mt-1">{formatCurrency(1250000)}</p>
           </div>
         </div>
@@ -377,10 +341,7 @@ export function Settings() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-on-surface">{t('categories')}</h4>
-                <button
-                  onClick={() => setIsCategoryModalOpen(true)}
-                  className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
-                >
+                <button onClick={() => setIsCategoryModalOpen(true)} className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">
                   <span className="material-symbols-outlined text-[18px]">add</span>
                 </button>
               </div>
@@ -392,10 +353,7 @@ export function Settings() {
                   <p className="text-xs text-secondary italic">{t('noData')}</p>
                 ) : (
                   categories.map((cat: any) => (
-                    <div
-                      key={cat.id}
-                      className="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-xl group hover:shadow-md transition-all"
-                    >
+                    <div key={cat.id} className="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded-xl group hover:shadow-md transition-all">
                       <div className={`w-3 h-3 rounded-full ${cat.color} shadow-sm`} />
                       <span className="material-symbols-outlined text-[18px] text-secondary">{cat.icon}</span>
                       <span className="text-sm font-semibold text-on-surface flex-1">{cat.name}</span>
@@ -416,10 +374,7 @@ export function Settings() {
                           >
                             <span className="material-symbols-outlined text-[16px]">edit</span>
                           </button>
-                          <button
-                            onClick={() => handleDeleteCategory(cat.id)}
-                            className="p-1.5 hover:bg-red-100 rounded text-red-500"
-                          >
+                          <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 hover:bg-red-100 rounded text-red-500">
                             <span className="material-symbols-outlined text-[16px]">delete</span>
                           </button>
                         </div>
