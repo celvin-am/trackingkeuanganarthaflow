@@ -1,7 +1,9 @@
 import postgres from 'postgres';
 import { env } from './env.js';
 
-const client = postgres(env.DATABASE_URL, {
+const cleanUrl = env.DATABASE_URL.split('?')[0];
+
+const client = postgres(cleanUrl, {
   ssl: 'require',
   max: 1,
   prepare: false,
