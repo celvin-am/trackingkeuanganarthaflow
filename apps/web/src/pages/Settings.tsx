@@ -86,7 +86,6 @@ export function Settings() {
       const res = await apiClient.patch('/settings/profile-picture', uploadData);
 
       if (res.data?.success) {
-        await queryClient.invalidateQueries({ queryKey: ['settings'] });
         window.location.reload();
       }
     } catch (err) {
@@ -154,13 +153,11 @@ export function Settings() {
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sedang membuat kategori...', categoryFormData);
     try {
       await apiClient.post('/categories', categoryFormData);
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setIsCategoryModalOpen(false);
       setCategoryFormData({ name: '', icon: 'category', color: 'bg-gray-500', type: 'EXPENSE' });
-      console.log('Kategori berhasil dibuat!');
     } catch (err) {
       console.error('Failed to create category', err);
       alert('Gagal membuat kategori. Silakan cek koneksi backend.');
@@ -171,14 +168,12 @@ export function Settings() {
     e.preventDefault();
     if (!editingCategory) return;
 
-    console.log('Sedang mengupdate kategori...', categoryFormData);
     try {
       await apiClient.patch(`/categories/${editingCategory.id}`, categoryFormData);
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setIsEditCategoryModalOpen(false);
       setEditingCategory(null);
       setCategoryFormData({ name: '', icon: 'category', color: 'bg-gray-500', type: 'EXPENSE' });
-      console.log('Kategori berhasil diupdate!');
     } catch (err) {
       console.error('Failed to update category', err);
       alert('Gagal mengupdate kategori.');
