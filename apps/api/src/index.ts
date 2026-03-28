@@ -29,6 +29,19 @@ const testAuth = betterAuth({
     "https://arthaflow.celvinandra.my.id",
     "https://api-arthaflow.celvinandra.my.id",
   ],
+
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      mapProfileToUser: (profile) => ({
+        name: profile.name,
+        email: profile.email,
+        emailVerified: profile.email_verified ?? false,
+        image: profile.picture ?? null,
+      }),
+    },
+  },
 });
 
 const app = express();
@@ -38,7 +51,7 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with betterAuth db adapter ok',
+    message: 'health with full auth config ok',
     time: new Date().toISOString(),
     authCreated: !!testAuth,
   });
