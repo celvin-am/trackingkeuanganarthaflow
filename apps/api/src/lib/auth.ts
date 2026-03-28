@@ -7,6 +7,7 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
   baseURL: "https://api-arthaflow.celvinandra.my.id",
   secret: env.BETTER_AUTH_SECRET,
+
   advanced: {
     useSecureCookies: true,
     cookieDomain: ".celvinandra.my.id",
@@ -14,14 +15,18 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     cookiePath: "/",
     trustProxy: true,
   },
+
   oauthConfig: {
     skipStateCookieCheck: true,
   },
+
   emailAndPassword: { enabled: true },
+
   trustedOrigins: [
     "https://arthaflow.celvinandra.my.id",
     "https://api-arthaflow.celvinandra.my.id",
   ],
+
   socialProviders: {
     google: {
       clientId: env.GOOGLE_CLIENT_ID!,
