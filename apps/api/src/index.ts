@@ -3,6 +3,13 @@ import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import { requireAuth } from './middleware/auth.middleware.js';
+import { errorHandler } from './middleware/error.middleware.js';
+
+import { walletRouter } from './routes/wallet.route.js';
+import { transactionRouter } from './routes/transaction.route.js';
+import { dashboardRouter } from './routes/dashboard.route.js';
+import { budgetRouter } from './routes/budget.route.js';
+import { categoryRouter } from './routes/category.route.js';
 import { settingsRouter } from './routes/settings.route.js';
 
 const app = express();
@@ -12,7 +19,7 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with settings route ok',
+    message: 'api restored',
     time: new Date().toISOString(),
     authLoaded: !!auth,
   });
@@ -30,15 +37,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.all('/api/auth/*', toNodeHandler(auth));
 
-app.get('/api/protected-test', requireAuth, (req, res) => {
-  res.status(200).json({
-    ok: true,
-    message: 'protected route works',
-    userId: req.user?.id ?? null,
-    email: req.user?.email ?? null,
-  });
-});
-
 app.use('/api/settings', requireAuth, settingsRouter);
+app.use('/api/wallets', requireAuth, walletRouter);
+app.use('/api/transactions', requireAuth, transactionRouter);
+app.use('/api/dashboard', requireAuth, dashboardRouter);
+app.use('/api/budgets', requireAuth, budgetRouter);
+app.use('/api/categories', requireAuth, categoryRouter);
+
+app.use(errorHandler);
 
 export default app;
