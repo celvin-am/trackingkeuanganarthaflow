@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { settingsService } from '../services/settings.service.js';
 import multer from 'multer';
+import path from 'path';
+import { supabaseAdmin } from '../lib/supabase.js';
 
-// 🔥 JANGAN pake diskStorage di Vercel! Pake memoryStorage.
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 4 * 1024 * 1024 } // Limit 4MB (Vercel max 4.5MB)
+  limits: { fileSize: 4 * 1024 * 1024 },
 });
 
 export const settingsRouter = Router();
@@ -31,23 +32,48 @@ settingsRouter.patch('/', async (req, res, next) => {
   }
 });
 
-// 🔥 FIX ERROR 500: Upload Foto Profil
+// Upload profile picture to Supabase Storage, save URL to DB
 settingsRouter.patch('/profile-picture', upload.single('image'), async (req, res, next) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No image uploaded' });
     }
 
-    // Convert buffer gambar jadi Base64 String
-    const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
+    const filePath = `avatars/${req.user.id}-${Date.now()}${ext}`;
 
-    // Simpen ke DB lewat service lo
-    const updatedUser = await settingsService.updateProfilePicture(req.user!.id, base64Image);
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('avatars')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true,
+      });
 
-    res.json({ success: true, user: updatedUser });
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      return res.status(500).json({ error: 'Failed to upload image to storage' });
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const imageUrl = publicUrlData.publicUrl;
+
+    const updatedUser = await settingsService.updateProfilePicture(req.user.id, imageUrl);
+
+    return res.json({
+      success: true,
+      imageUrl,
+      user: updatedUser,
+    });
   } catch (err) {
-    console.error("Upload Error:", err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Upload Error:', err);
+    next(err);
   }
 });
 
