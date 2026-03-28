@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { getDb } from './lib/db.js';
 
 const testAuth = betterAuth({
+  database: drizzleAdapter(getDb(), { provider: 'pg' }),
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: "https://api-arthaflow.celvinandra.my.id",
 
@@ -35,7 +38,7 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with betterAuth non-db config ok',
+    message: 'health with betterAuth db adapter ok',
     time: new Date().toISOString(),
     authCreated: !!testAuth,
   });
