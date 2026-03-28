@@ -3,6 +3,7 @@ import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import { requireAuth } from './middleware/auth.middleware.js';
+import { settingsRouter } from './routes/settings.route.js';
 
 const app = express();
 
@@ -11,7 +12,7 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with protected test route ok',
+    message: 'health with settings route ok',
     time: new Date().toISOString(),
     authLoaded: !!auth,
   });
@@ -37,5 +38,7 @@ app.get('/api/protected-test', requireAuth, (req, res) => {
     email: req.user?.email ?? null,
   });
 });
+
+app.use('/api/settings', requireAuth, settingsRouter);
 
 export default app;
