@@ -12,6 +12,13 @@ const upload = multer({
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+type ParsedReceipt = {
+  merchant?: string;
+  date?: string;
+  amount?: number;
+  description?: string;
+};
+
 scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
   try {
     if (!ai) {
@@ -66,12 +73,7 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
     const outputText = response.text || '';
     const cleanedText = outputText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    let parsedData: {
-      merchant?: string;
-      date?: string;
-      amount?: number;
-      description?: string;
-    };
+    let parsedData: ParsedReceipt;
 
     try {
       parsedData = JSON.parse(cleanedText);
@@ -88,9 +90,9 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
       parsedData.amount = Number(parsedData.amount || 0);
     }
 
-    res.json(parsedData);
+    return res.json(parsedData);
   } catch (err) {
     console.error('OCR Error:', err);
-    next(err);
+    return next(err);
   }
 });

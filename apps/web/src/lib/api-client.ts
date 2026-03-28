@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  // 🔥 Markas API baru lo
   baseURL: 'https://api-arthaflow.celvinandra.my.id/api',
   withCredentials: true,
   headers: {
@@ -9,7 +8,6 @@ export const apiClient = axios.create({
   },
 });
 
-// ✅ Gak perlu fetch manual lagi! Kookie otomatis nempel karena domainnya sama.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

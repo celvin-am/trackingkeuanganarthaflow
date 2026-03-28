@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../lib/LanguageContext';
 import { useSession } from '../lib/auth';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type Stats = {
   totalBalance?: number;
   monthlyIncome?: number;
@@ -40,7 +39,12 @@ type BalanceTrendItem = {
   expense: number;
 };
 
-// ─── Debounce Hook ────────────────────────────────────────────────────────────
+type PieExpenseItem = {
+  categoryName: string;
+  value: number;
+  colorKey: string;
+};
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
 
@@ -52,7 +56,6 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-// ─── Skeleton Component ───────────────────────────────────────────────────────
 function Skeleton({ className, style }: { className?: string; style?: CSSProperties }) {
   return <div className={`bg-neutral-200 animate-pulse rounded ${className ?? ''}`} style={style} />;
 }
@@ -82,7 +85,6 @@ export function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ─── Query 1: Stats ─────────────────────────────────────────────────────────
   const { data: stats, isLoading: statsLoading } = useQuery<Stats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
@@ -95,7 +97,6 @@ export function Dashboard() {
     retry: 1,
   });
 
-  // ─── Query 2: Expense Distribution ─────────────────────────────────────────
   const { data: expenseDistRaw = [], isLoading: expenseLoading } = useQuery<ExpenseItem[]>({
     queryKey: ['dashboard-expense-dist'],
     queryFn: async () => {
@@ -111,7 +112,6 @@ export function Dashboard() {
     retry: 1,
   });
 
-  // ─── Query 3: Balance Trend ────────────────────────────────────────────────
   const { data: balanceTrendRaw = [], isLoading: trendLoading } = useQuery<BalanceTrendItem[]>({
     queryKey: ['dashboard-balance-trend', debouncedRange],
     queryFn: async () => {
@@ -129,6 +129,15 @@ export function Dashboard() {
 
   const safeExpenseDist = Array.isArray(expenseDistRaw) ? expenseDistRaw : [];
   const safeBalanceTrend = Array.isArray(balanceTrendRaw) ? balanceTrendRaw : [];
+
+  const pieData: PieExpenseItem[] =
+    safeExpenseDist.length > 0
+      ? safeExpenseDist.map((d) => ({
+        categoryName: d.categoryName,
+        value: Number(d.amount),
+        colorKey: d.categoryColor ?? d.color ?? 'bg-gray-500',
+      }))
+      : [];
 
   const totalExpense = useMemo(() => {
     return safeExpenseDist.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
@@ -162,7 +171,6 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* ── Stats Grid ─────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
           onClick={() => navigate('/wallets')}
@@ -287,9 +295,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* ── Charts Grid ─────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-12 gap-6">
-        {/* Expense Distribution */}
         <div className="col-span-12 lg:col-span-5 bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[450px]">
           <div className="flex justify-between items-center mb-8">
             <h4 className="text-lg font-extrabold tracking-tight">{t('expenseDistribution')}</h4>
@@ -328,81 +334,40 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] relative">
+          <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] min-w-0 relative">
             {expenseLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-20">
                 <Skeleton className="w-[160px] h-[160px] rounded-full" />
               </div>
             )}
 
-            {!expenseLoading && safeExpenseDist.length === 0 && (
+            {!expenseLoading && pieData.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 backdrop-blur-[1px] rounded-xl text-center p-4">
                 <p className="text-sm font-bold text-secondary max-w-[200px]">{t('noData')}</p>
               </div>
             )}
 
-            {!expenseLoading && (
+            {!expenseLoading && pieData.length > 0 && (
               <div className="relative w-[300px] h-[300px] min-w-[300px] min-h-[300px] flex-shrink-0 mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    {!expenseLoading && (
-                      <div className="relative w-[300px] h-[300px] min-w-[300px] min-h-[300px] flex-shrink-0 mx-auto">
-                        {(() => {
-                          const pieData =
-                            safeExpenseDist.length > 0
-                              ? safeExpenseDist.map((d) => ({
-                                categoryName: d.categoryName,
-                                value: Number(d.amount),
-                                colorKey: d.categoryColor ?? d.color ?? 'bg-gray-500',
-                              }))
-                              : [
-                                {
-                                  categoryName: 'No Data',
-                                  value: 1,
-                                  colorKey: 'bg-gray-100',
-                                },
-                              ];
-
-                          return (
-                            <>
-                              <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                  <Pie
-                                    data={pieData}
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    animationBegin={0}
-                                    animationDuration={600}
-                                  >
-                                    {pieData.map((entry, index) => (
-                                      <Cell
-                                        key={`cell-${index}`}
-                                        fill={tailwindToHex(entry.colorKey)}
-                                        stroke="none"
-                                      />
-                                    ))}
-                                  </Pie>
-                                  <Tooltip
-                                    contentStyle={{
-                                      borderRadius: '12px',
-                                      border: 'none',
-                                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                    }}
-                                    formatter={(value: any) => formatCurrency(Number(value))}
-                                  />
-                                </PieChart>
-                              </ResponsiveContainer>
-                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-[10px] text-secondary font-bold uppercase">{t('total')}</span>
-                                <span className="text-lg font-black">{safeExpenseDist.length > 0 ? '100%' : '0%'}</span>
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
+                    <Pie
+                      data={pieData}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      animationBegin={0}
+                      animationDuration={600}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={tailwindToHex(entry.colorKey)}
+                          stroke="none"
+                        />
+                      ))}
+                    </Pie>
                     <Tooltip
                       contentStyle={{
                         borderRadius: '12px',
@@ -415,12 +380,12 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-[10px] text-secondary font-bold uppercase">{t('total')}</span>
-                  <span className="text-lg font-black">{safeExpenseDist.length > 0 ? '100%' : '0%'}</span>
+                  <span className="text-lg font-black">100%</span>
                 </div>
               </div>
             )}
 
-            <div className="w-full flex-1 space-y-3 max-h-full overflow-y-auto pr-2 scrollbar-hide">
+            <div className="w-full flex-1 min-w-0 space-y-3 max-h-full overflow-y-auto pr-2 scrollbar-hide">
               {safeExpenseDist.map((item) => {
                 const percentage = totalExpense > 0 ? ((item.amount / totalExpense) * 100).toFixed(1) : 0;
                 return (
@@ -428,7 +393,7 @@ export function Dashboard() {
                     <div className="flex items-center gap-3">
                       <div
                         className="w-2.5 h-2.5 rounded-full shadow-sm"
-                        style={{ backgroundColor: tailwindToHex(item.categoryColor) || '#cbd5e1' }}
+                        style={{ backgroundColor: tailwindToHex(item.categoryColor || item.color) }}
                       />
                       <span className="text-[13px] font-bold text-on-surface truncate max-w-[120px]">
                         {item.categoryName}
@@ -447,7 +412,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Monthly Comparison */}
         <div className="col-span-12 lg:col-span-7 bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[450px]">
           <div className="flex justify-between items-center mb-8">
             <h4 className="text-lg font-extrabold tracking-tight">{t('monthlyComparison')}</h4>
@@ -505,7 +469,6 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* ── Balance Trend Area Chart ───────────────────────────────────────── */}
       <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden min-h-[450px]">
         <div className="flex justify-between items-center mb-8 relative z-10">
           <div>
@@ -519,8 +482,8 @@ export function Dashboard() {
                 key={range}
                 onClick={() => setSelectedRange(range)}
                 className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === range
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                  : 'bg-neutral-100 hover:bg-neutral-200'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    : 'bg-neutral-100 hover:bg-neutral-200'
                   }`}
               >
                 {range}
