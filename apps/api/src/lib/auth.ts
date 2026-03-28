@@ -3,7 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from './env.js';
 import { db } from './db.js';
 
-export const auth = betterAuth({
+export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
   baseURL: "https://api-arthaflow.celvinandra.my.id",
   secret: env.BETTER_AUTH_SECRET,
