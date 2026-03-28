@@ -1,34 +1,37 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
-import { env } from '../lib/env.js';
 
 export const scanRouter = Router();
 
-// Configure multer for memory storage (we just need the buffer to send to Gemini)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
   try {
+    if (!ai) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Prepare generative prompt
     const prompt = `
-      You are an expert financial receipt analyzer. Support all languages (especially Indonesian).
-      Analyze the image and extract ONLY a raw JSON object. No Markdown, no preamble.
+      You are an expert financial receipt analyzer. Support all languages, especially Indonesian.
+      Analyze the image and return ONLY a raw JSON object.
+      No markdown, no preamble, no explanation.
 
       RULES FOR NUMBERS:
-      - TOTAL AMOUNT: Extract the final "Grand Total" or "Total".
-      - If currency is IDR (Rp), dots (.) are THOUSAND separators. "143.000" MUST be 143000.
-      - Return "amount" as a pure NUMBER without dots or currency symbols.
+      - TOTAL AMOUNT: extract the final "Grand Total" or "Total".
+      - If currency is IDR (Rp), dots (.) are thousand separators.
+      - "143.000" must become 143000.
+      - Return "amount" as a pure number without currency symbols.
 
       JSON STRUCTURE:
       {
@@ -39,7 +42,6 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
       }
     `;
 
-    // Process via Gemini 2.5 Flash
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -57,30 +59,37 @@ scanRouter.post('/', upload.single('receipt'), async (req, res, next) => {
         },
       ],
       config: {
-        temperature: 0.1, // Keep it deterministic for JSON extraction
-      }
+        temperature: 0.1,
+      },
     });
 
     const outputText = response.text || '';
-
-    // Clean potential markdown blocks if Gemini ignored the prompt
     const cleanedText = outputText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    let parsedData;
+    let parsedData: {
+      merchant?: string;
+      date?: string;
+      amount?: number;
+      description?: string;
+    };
+
     try {
       parsedData = JSON.parse(cleanedText);
-    } catch (e) {
+    } catch {
       console.error('Failed to parse Gemini output:', cleanedText);
       return res.status(500).json({ error: 'Failed to extract structured data from receipt.' });
     }
 
-    // Smart Date Parser: Fallback to current date if missing or invalid
-    if (!parsedData.date || isNaN(new Date(parsedData.date).getTime())) {
+    if (!parsedData.date || Number.isNaN(new Date(parsedData.date).getTime())) {
       parsedData.date = new Date().toISOString().split('T')[0];
     }
 
+    if (typeof parsedData.amount !== 'number') {
+      parsedData.amount = Number(parsedData.amount || 0);
+    }
+
     res.json(parsedData);
-  } catch (err: any) {
+  } catch (err) {
     console.error('OCR Error:', err);
     next(err);
   }
