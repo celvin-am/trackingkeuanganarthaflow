@@ -11,6 +11,7 @@ import { dashboardRouter } from './routes/dashboard.route.js';
 import { budgetRouter } from './routes/budget.route.js';
 import { categoryRouter } from './routes/category.route.js';
 import { settingsRouter } from './routes/settings.route.js';
+import { scanRouter } from './routes/scan.route.js'; // hapus baris ini kalau file belum ada
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.get('/api/health', (_req, res) => {
 app.use(cors({
   origin: "https://arthaflow.celvinandra.my.id",
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-better-auth-id'],
 }));
 
@@ -43,6 +44,7 @@ app.use('/api/transactions', requireAuth, transactionRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/budgets', requireAuth, budgetRouter);
 app.use('/api/categories', requireAuth, categoryRouter);
+app.use('/api/scan', requireAuth, scanRouter); // hapus kalau route scan belum dibuat
 
 app.use(errorHandler);
 
