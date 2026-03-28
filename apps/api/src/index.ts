@@ -1,7 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+
+const testAuth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET!,
+  baseURL: "https://api-arthaflow.celvinandra.my.id",
+});
 
 const app = express();
 
@@ -10,10 +14,9 @@ app.set('trust proxy', 1);
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'health with better-auth drizzle adapter import ok',
+    message: 'health with minimal betterAuth init ok',
     time: new Date().toISOString(),
-    betterAuthLoaded: typeof betterAuth === 'function',
-    drizzleAdapterLoaded: typeof drizzleAdapter === 'function',
+    authCreated: !!testAuth,
   });
 });
 
