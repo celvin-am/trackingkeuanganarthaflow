@@ -1,12 +1,11 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { env } from './env.js';
-import { db } from './db.js';
+import { getDb } from './db.js';
 
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
-  database: drizzleAdapter(db, { provider: 'pg' }),
+  database: drizzleAdapter(getDb(), { provider: 'pg' }),
+  secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: "https://api-arthaflow.celvinandra.my.id",
-  secret: env.BETTER_AUTH_SECRET,
 
   advanced: {
     useSecureCookies: true,
@@ -20,7 +19,9 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     skipStateCookieCheck: true,
   },
 
-  emailAndPassword: { enabled: true },
+  emailAndPassword: {
+    enabled: true,
+  },
 
   trustedOrigins: [
     "https://arthaflow.celvinandra.my.id",
@@ -29,14 +30,14 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
 
   socialProviders: {
     google: {
-      clientId: env.GOOGLE_CLIENT_ID!,
-      clientSecret: env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       mapProfileToUser: (profile) => ({
         name: profile.name,
         email: profile.email,
         emailVerified: profile.email_verified ?? false,
         image: profile.picture ?? null,
       }),
-    }
+    },
   },
 });
