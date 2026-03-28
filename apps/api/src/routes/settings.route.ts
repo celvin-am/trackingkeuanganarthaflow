@@ -32,15 +32,25 @@ settingsRouter.patch('/', async (req, res, next) => {
   }
 });
 
-// Upload profile picture to Supabase Storage, save URL to DB
+// Upload profile picture to Supabase Storage
 settingsRouter.patch('/profile-picture', upload.single('image'), async (req, res, next) => {
   try {
+    console.log('profile upload content-type:', req.headers['content-type']);
+    console.log('profile upload file exists:', !!req.file);
+    console.log('profile upload body keys:', Object.keys(req.body || {}));
+
     if (!req.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: 'No image uploaded' });
+      return res.status(400).json({
+        error: 'No image uploaded',
+        debug: {
+          contentType: req.headers['content-type'],
+          bodyKeys: Object.keys(req.body || {}),
+        },
+      });
     }
 
     const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
