@@ -12,6 +12,7 @@ import { budgetRouter } from './routes/budget.route.js';
 import { categoryRouter } from './routes/category.route.js';
 import { settingsRouter } from './routes/settings.route.js';
 import { scanRouter } from './routes/scan.route.js';
+import { exportRouter } from './routes/export.route.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/budgets', requireAuth, budgetRouter);
 app.use('/api/categories', requireAuth, categoryRouter);
 app.use('/api/scan', requireAuth, scanRouter);
+app.use('/api/export', requireAuth, exportRouter);
 
 app.use((req, res) => {
   res.status(404).json({
