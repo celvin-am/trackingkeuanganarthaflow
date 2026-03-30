@@ -41,6 +41,7 @@ app.get('/api/health', (_req, res) => {
 
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://192.168.100.11:5173',
   'https://arthaflow.celvinandra.my.id',
 ];
 
