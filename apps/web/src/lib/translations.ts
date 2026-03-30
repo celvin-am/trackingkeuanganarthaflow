@@ -176,6 +176,7 @@ export const translations = {
     scanFailed: 'Failed to process receipt. Please try again or enter it manually.',
     saveTransactionFailed: 'Failed to save transaction to database.',
     receiptScan: 'Receipt Scan',
+
     signInFailed: 'Failed to sign in',
     signUpFailed: 'Failed to sign up',
     unexpectedError: 'An unexpected error occurred',
@@ -220,7 +221,6 @@ export const translations = {
     syncing: 'Syncing...',
     user: 'User',
     notLoggedIn: 'Not Logged In',
-    
   },
 
   id: {
@@ -372,6 +372,7 @@ export const translations = {
     deleteBudgetConfirm: 'Hapus anggaran ini?',
     saveBudgetFailed: 'Gagal menyimpan anggaran.',
     typeDeleteToConfirm: 'Ketik "HAPUS" untuk konfirmasi',
+
     scanDescription: 'Unggah struk dan biarkan AI menangani ekstraksi data.',
     resetScan: 'Reset Scan',
     uploadReceipt: 'Unggah Struk',
@@ -400,8 +401,8 @@ export const translations = {
     scanFailed: 'Gagal memproses struk. Silakan coba lagi atau input manual.',
     saveTransactionFailed: 'Gagal menyimpan transaksi ke database.',
     receiptScan: 'Scan Struk',
-    
-    
+
+    signInFailed: 'Gagal masuk',
     signUpFailed: 'Gagal daftar',
     unexpectedError: 'Terjadi kesalahan tak terduga',
     welcomeBack: 'Selamat datang kembali',
