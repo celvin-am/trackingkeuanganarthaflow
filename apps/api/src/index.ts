@@ -1,11 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config({
-  path: new URL('../.env', import.meta.url).pathname,
-  override: true,
-});
-const dbUrl = process.env.DATABASE_URL || '';
-console.log('DATABASE_URL loaded:', dbUrl ? 'YES' : 'NO');
-
 import express from 'express';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
