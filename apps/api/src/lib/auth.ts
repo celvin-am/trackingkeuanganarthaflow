@@ -2,16 +2,18 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getDb } from './db.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: "https://api-arthaflow.celvinandra.my.id",
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 
   advanced: {
-    useSecureCookies: true,
-    cookieDomain: ".celvinandra.my.id",
-    cookieSameSite: "Lax",
-    cookiePath: "/",
+    useSecureCookies: isProduction,
+    cookieDomain: isProduction ? '.celvinandra.my.id' : undefined,
+    cookieSameSite: 'lax',
+    cookiePath: '/',
     trustProxy: true,
   },
 
@@ -24,20 +26,25 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
   },
 
   trustedOrigins: [
-    "https://arthaflow.celvinandra.my.id",
-    "https://api-arthaflow.celvinandra.my.id",
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://arthaflow.celvinandra.my.id',
+    'https://api-arthaflow.celvinandra.my.id',
   ],
 
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      mapProfileToUser: (profile) => ({
-        name: profile.name,
-        email: profile.email,
-        emailVerified: profile.email_verified ?? false,
-        image: profile.picture ?? null,
-      }),
-    },
-  },
+  socialProviders:
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            mapProfileToUser: (profile) => ({
+              name: profile.name,
+              email: profile.email,
+              emailVerified: profile.email_verified ?? false,
+              image: profile.picture ?? null,
+            }),
+          },
+        }
+      : {},
 });

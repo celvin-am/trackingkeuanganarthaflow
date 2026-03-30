@@ -1,15 +1,20 @@
-import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../db/schema/index.js';
-
-type AppDb = PostgresJsDatabase<typeof schema>;
+import { env } from './env.js';
 
 let _client: ReturnType<typeof postgres> | null = null;
-let _db: AppDb | null = null;
+let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 function getDbClient() {
   if (!_client) {
-    _client = postgres(process.env.DATABASE_URL!, {
+    console.log(
+      'DB.ts DATABASE_URL preview:',
+      env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@')
+    );
+
+    _client = postgres(env.DATABASE_URL, {
       ssl: 'require',
       max: 1,
       prepare: false,
@@ -21,7 +26,7 @@ function getDbClient() {
   return _client;
 }
 
-export function getDb(): AppDb {
+export function getDb(): PostgresJsDatabase<typeof schema> {
   if (!_db) {
     _db = drizzle(getDbClient(), { schema });
   }
@@ -29,7 +34,7 @@ export function getDb(): AppDb {
   return _db;
 }
 
-export const db: AppDb = new Proxy({} as AppDb, {
+export const db = new Proxy({} as PostgresJsDatabase<typeof schema>, {
   get(_target, prop, receiver) {
     return Reflect.get(getDb() as object, prop, receiver);
   },

@@ -1,4 +1,10 @@
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+dotenv.config({
+  path: new URL('../../.env', import.meta.url).pathname,
+  override: true,
+});
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
@@ -10,6 +16,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 });
 
 export const env = envSchema.parse({
@@ -22,4 +30,6 @@ export const env = envSchema.parse({
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });

@@ -1,3 +1,15 @@
+import dotenv from 'dotenv';
+dotenv.config({
+  path: new URL('../.env', import.meta.url).pathname,
+  override: true,
+});
+const dbUrl = process.env.DATABASE_URL || '';
+console.log('DATABASE_URL loaded:', dbUrl ? 'YES' : 'NO');
+console.log(
+  'DATABASE_URL preview:',
+  dbUrl.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@')
+);
+
 import express from 'express';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
@@ -27,8 +39,19 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://arthaflow.celvinandra.my.id',
+];
+
 app.use(cors({
-  origin: 'https://arthaflow.celvinandra.my.id',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-better-auth-id'],
@@ -56,5 +79,14 @@ app.use((req, res) => {
 });
 
 app.use(errorHandler);
+
+const PORT = Number(process.env.PORT || 3000);
+const isVercel = !!process.env.VERCEL;
+
+if (!isVercel) {
+  app.listen(PORT, () => {
+    console.log(`API listening on http://localhost:${PORT}`);
+  });
+}
 
 export default app;
