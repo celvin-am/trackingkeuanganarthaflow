@@ -5,10 +5,6 @@ dotenv.config({
 });
 const dbUrl = process.env.DATABASE_URL || '';
 console.log('DATABASE_URL loaded:', dbUrl ? 'YES' : 'NO');
-console.log(
-  'DATABASE_URL preview:',
-  dbUrl.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@')
-);
 
 import express from 'express';
 import cors from 'cors';

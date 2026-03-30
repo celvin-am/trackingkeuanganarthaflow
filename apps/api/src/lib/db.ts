@@ -9,10 +9,6 @@ let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 function getDbClient() {
   if (!_client) {
-    console.log(
-      'DB.ts DATABASE_URL preview:',
-      env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@')
-    );
 
     _client = postgres(env.DATABASE_URL, {
       ssl: 'require',
