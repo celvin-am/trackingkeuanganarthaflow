@@ -1,6 +1,6 @@
 import { db } from '../lib/db.js';
 import { budgets, transactions, categories } from '../db/schema/index.js';
-import { eq, and, sql, gte, lt } from 'drizzle-orm';
+import { eq, and, sql, gte, lt, inArray } from 'drizzle-orm';
 
 type CreateBudgetDto = {
   categoryId: string;
@@ -10,7 +10,6 @@ type CreateBudgetDto = {
 };
 
 const JAKARTA_OFFSET_HOURS = 7;
-const JAKARTA_OFFSET_MS = JAKARTA_OFFSET_HOURS * 60 * 60 * 1000;
 
 function getJakartaMonthRangeUtc(month: number, year: number) {
   const startUtc = new Date(Date.UTC(year, month - 1, 1, -JAKARTA_OFFSET_HOURS, 0, 0, 0));
@@ -26,7 +25,7 @@ export const budgetService = {
   async findAll(userId: string, month: number, year: number) {
     const { startUtc, nextMonthStartUtc } = getJakartaMonthRangeUtc(month, year);
 
-    return db
+    const budgetRows = await db
       .select({
         id: budgets.id,
         categoryId: budgets.categoryId,
@@ -36,20 +35,6 @@ export const budgetService = {
         limitAmount: budgets.limitAmount,
         month: budgets.month,
         year: budgets.year,
-        spent: sql<number>`
-          COALESCE(
-            (
-              SELECT SUM(CAST(t.amount AS numeric))
-              FROM transaction t
-              WHERE t.category_id = ${budgets.categoryId}
-                AND t.user_id = ${budgets.userId}
-                AND t.type = 'EXPENSE'
-                AND t.date >= ${startUtc}
-                AND t.date < ${nextMonthStartUtc}
-            ),
-            0
-          )
-        `,
       })
       .from(budgets)
       .innerJoin(categories, eq(budgets.categoryId, categories.id))
@@ -60,6 +45,38 @@ export const budgetService = {
           eq(budgets.year, year)
         )
       );
+
+    if (budgetRows.length === 0) {
+      return [];
+    }
+
+    const categoryIds = budgetRows.map((b) => b.categoryId);
+
+    const spendingRows = await db
+      .select({
+        categoryId: transactions.categoryId,
+        spent: sql<number>`CAST(SUM(${transactions.amount}) AS NUMERIC)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, 'EXPENSE'),
+          inArray(transactions.categoryId, categoryIds),
+          gte(transactions.date, startUtc),
+          lt(transactions.date, nextMonthStartUtc)
+        )
+      )
+      .groupBy(transactions.categoryId);
+
+    const spentMap = new Map(
+      spendingRows.map((row) => [row.categoryId, Number(row.spent || 0)])
+    );
+
+    return budgetRows.map((budget) => ({
+      ...budget,
+      spent: spentMap.get(budget.categoryId) || 0,
+    }));
   },
 
   async create(userId: string, data: CreateBudgetDto) {
