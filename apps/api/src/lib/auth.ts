@@ -2,9 +2,11 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getDb } from './db.js';
 
-const isVercelProduction = process.env.VERCEL_ENV === 'production';
 const authBaseUrl =
   process.env.BETTER_AUTH_URL || 'http://localhost:3000';
+
+const isProdDomain =
+  authBaseUrl.includes('api-arthaflow.celvinandra.my.id');
 
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
@@ -13,7 +15,7 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
 
   advanced: {
     useSecureCookies: authBaseUrl.startsWith('https://'),
-    cookieDomain: isVercelProduction ? '.celvinandra.my.id' : undefined,
+    cookieDomain: isProdDomain ? '.celvinandra.my.id' : undefined,
     cookieSameSite: 'lax',
     cookiePath: '/',
     trustProxy: true,
