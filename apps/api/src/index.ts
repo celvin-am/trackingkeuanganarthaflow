@@ -30,21 +30,13 @@ const exactAllowedOrigins = new Set([
   'http://localhost:5173',
   'http://192.168.100.11:5173',
   'https://arthaflow.celvinandra.my.id',
+  'https://arthaflow-web-git-feat-mobile-responsive-celvin-ams-projects.vercel.app',
 ]);
-
-const isAllowedOrigin = (origin?: string) => {
-  if (!origin) return true;
-  if (exactAllowedOrigins.has(origin)) return true;
-
-  return /^https:\/\/arthaflow-web-git-[a-z0-9-]+-celvin-ams-projects\.vercel\.app$/.test(
-    origin
-  );
-};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
+      if (!origin || exactAllowedOrigins.has(origin)) {
         callback(null, true);
         return;
       }
