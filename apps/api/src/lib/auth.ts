@@ -13,7 +13,7 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
   baseURL: authBaseUrl,
 
   advanced: {
-    useSecureCookies: authBaseUrl.startsWith('https://'),
+    useSecureCookies: true,
     cookieDomain: isProductionCustomDomain ? '.celvinandra.my.id' : undefined,
     cookieSameSite: isPreviewVercel ? 'none' : 'lax',
     cookiePath: '/',
