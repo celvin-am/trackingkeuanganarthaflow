@@ -26,27 +26,25 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
   },
 
   trustedOrigins: [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://192.168.100.11:5173',
-  'http://192.168.100.11:3000',
-  'https://arthaflow.celvinandra.my.id',
-  'https://api-arthaflow.celvinandra.my.id',
-],
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://192.168.100.11:5173',
+    'http://192.168.100.11:3000',
+    'https://arthaflow.celvinandra.my.id',
+    'https://api-arthaflow.celvinandra.my.id',
+    'https://arthaflow-web-git-feat-mobile-responsive-celvin-ams-projects.vercel.app',
+  ],
 
-  socialProviders:
-    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? {
-          google: {
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            mapProfileToUser: (profile) => ({
-              name: profile.name,
-              email: profile.email,
-              emailVerified: profile.email_verified ?? false,
-              image: profile.picture ?? null,
-            }),
-          },
-        }
-      : {},
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      mapProfileToUser: (profile) => ({
+        name: profile.name,
+        email: profile.email,
+        emailVerified: profile.email_verified ?? false,
+        image: profile.picture ?? null,
+      }),
+    },
+  },
 });
