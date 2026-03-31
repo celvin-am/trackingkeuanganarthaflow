@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://api-arthaflow.celvinandra.my.id/api/$1"
+    },
+    {
+      "source": "/((?!api/|assets/|favicon.ico).*)",
+      "destination": "/index.html"
     }
   ]
 }
