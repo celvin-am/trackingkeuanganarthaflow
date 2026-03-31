@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     ok: true,
-    message: 'api isolated health ok',
+    message: 'api restored',
     time: new Date().toISOString(),
   });
 });

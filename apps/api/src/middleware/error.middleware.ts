@@ -8,9 +8,14 @@ export const errorHandler = (
   _next: NextFunction
 ) => {
   const message =
-    err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
+    err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+        ? err
+        : 'Unknown error';
 
   const stack = err instanceof Error ? err.stack : undefined;
+
   const statusCode =
     typeof err === 'object' &&
     err !== null &&
@@ -20,6 +25,7 @@ export const errorHandler = (
       : undefined;
 
   console.error('[API ERROR]', message);
+
   if (process.env.NODE_ENV === 'development' && stack) {
     console.error(stack);
   }
