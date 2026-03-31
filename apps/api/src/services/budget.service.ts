@@ -1,6 +1,6 @@
 import { db } from '../lib/db.js';
 import { budgets, transactions, categories } from '../db/schema/index.js';
-import { eq, and, sql, gte, lt, inArray } from 'drizzle-orm';
+import { eq, and, sql, gte, lt } from 'drizzle-orm';
 
 type CreateBudgetDto = {
   categoryId: string;
@@ -50,8 +50,6 @@ export const budgetService = {
       return [];
     }
 
-    const categoryIds = budgetRows.map((b) => b.categoryId);
-
     const spendingRows = await db
       .select({
         categoryId: transactions.categoryId,
@@ -62,16 +60,18 @@ export const budgetService = {
         and(
           eq(transactions.userId, userId),
           eq(transactions.type, 'EXPENSE'),
-          inArray(transactions.categoryId, categoryIds),
           gte(transactions.date, startUtc),
           lt(transactions.date, nextMonthStartUtc)
         )
       )
       .groupBy(transactions.categoryId);
 
-    const spentMap = new Map(
-      spendingRows.map((row) => [row.categoryId, Number(row.spent || 0)])
-    );
+    const spentMap = new Map<string, number>();
+
+    for (const row of spendingRows) {
+      if (!row.categoryId) continue;
+      spentMap.set(row.categoryId, Number(row.spent || 0));
+    }
 
     return budgetRows.map((budget) => ({
       ...budget,
