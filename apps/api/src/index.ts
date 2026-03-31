@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './lib/auth.js';
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.get('/api/health', (_req, res) => {
     time: new Date().toISOString(),
   });
 });
+
+app.all('/api/auth/*', toNodeHandler(auth));
 
 app.use((req, res) => {
   res.status(404).json({
