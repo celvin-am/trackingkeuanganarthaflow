@@ -2,10 +2,29 @@ import express from 'express';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
+import { requireAuth } from './middleware/auth.middleware.js';
+import { errorHandler } from './middleware/error.middleware.js';
+
+import { walletRouter } from './routes/wallet.route.js';
+import { transactionRouter } from './routes/transaction.route.js';
+import { dashboardRouter } from './routes/dashboard.route.js';
+import { budgetRouter } from './routes/budget.route.js';
+import { categoryRouter } from './routes/category.route.js';
+import { settingsRouter } from './routes/settings.route.js';
+import { scanRouter } from './routes/scan.route.js';
+import { exportRouter } from './routes/export.route.js';
 
 const app = express();
 
 app.set('trust proxy', 1);
+
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({
+    ok: true,
+    message: 'api restored',
+    time: new Date().toISOString(),
+  });
+});
 
 const exactAllowedOrigins = new Set([
   'http://localhost:5173',
@@ -17,7 +36,9 @@ const isAllowedOrigin = (origin?: string) => {
   if (!origin) return true;
   if (exactAllowedOrigins.has(origin)) return true;
 
-  return /^https:\/\/arthaflow-web-git-[a-z0-9-]+-celvin-ams-projects\.vercel\.app$/.test(origin);
+  return /^https:\/\/arthaflow-web-git-[a-z0-9-]+-celvin-ams-projects\.vercel\.app$/.test(
+    origin
+  );
 };
 
 app.use(
@@ -38,15 +59,16 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.get('/api/health', (_req, res) => {
-  res.status(200).json({
-    ok: true,
-    message: 'api restored',
-    time: new Date().toISOString(),
-  });
-});
-
 app.all('/api/auth/*', toNodeHandler(auth));
+
+app.use('/api/settings', requireAuth, settingsRouter);
+app.use('/api/wallets', requireAuth, walletRouter);
+app.use('/api/transactions', requireAuth, transactionRouter);
+app.use('/api/dashboard', requireAuth, dashboardRouter);
+app.use('/api/budgets', requireAuth, budgetRouter);
+app.use('/api/categories', requireAuth, categoryRouter);
+app.use('/api/scan', requireAuth, scanRouter);
+app.use('/api/export', requireAuth, exportRouter);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -54,6 +76,8 @@ app.use((req, res) => {
     path: req.originalUrl,
   });
 });
+
+app.use(errorHandler);
 
 const PORT = Number(process.env.PORT || 3000);
 const isVercel = !!process.env.VERCEL;

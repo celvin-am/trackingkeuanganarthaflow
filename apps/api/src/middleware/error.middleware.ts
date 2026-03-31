@@ -15,7 +15,6 @@ export const errorHandler = (
         : 'Unknown error';
 
   const stack = err instanceof Error ? err.stack : undefined;
-
   const statusCode =
     typeof err === 'object' &&
     err !== null &&

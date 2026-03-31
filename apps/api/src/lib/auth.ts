@@ -2,26 +2,15 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { getDb } from './db.js';
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-const trustedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://192.168.100.11:5173',
-  'http://192.168.100.11:3000',
-  'https://arthaflow.celvinandra.my.id',
-  'https://api-arthaflow.celvinandra.my.id',
-];
-
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: 'https://api-arthaflow.celvinandra.my.id',
 
   advanced: {
-    useSecureCookies: isProduction,
-    cookieDomain: isProduction ? '.celvinandra.my.id' : undefined,
-    cookieSameSite: 'lax',
+    useSecureCookies: true,
+    cookieDomain: '.celvinandra.my.id',
+    cookieSameSite: 'Lax',
     cookiePath: '/',
     trustProxy: true,
   },
@@ -34,7 +23,15 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     enabled: true,
   },
 
-  trustedOrigins,
+  bearerAuth: {
+    enabled: true,
+  },
+
+  trustedOrigins: [
+    'https://arthaflow.celvinandra.my.id',
+    'https://api-arthaflow.celvinandra.my.id',
+    'https://arthaflow-web-git-feat-mobile-responsive-celvin-ams-projects.vercel.app',
+  ],
 
   socialProviders: {
     google: {
