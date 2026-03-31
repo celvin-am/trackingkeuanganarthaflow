@@ -4,6 +4,15 @@ import { getDb } from './db.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const trustedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://192.168.100.11:5173',
+  'http://192.168.100.11:3000',
+  'https://arthaflow.celvinandra.my.id',
+  'https://api-arthaflow.celvinandra.my.id',
+];
+
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
   secret: process.env.BETTER_AUTH_SECRET!,
@@ -25,15 +34,7 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     enabled: true,
   },
 
-  trustedOrigins: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://192.168.100.11:5173',
-    'http://192.168.100.11:3000',
-    'https://arthaflow.celvinandra.my.id',
-    'https://api-arthaflow.celvinandra.my.id',
-    'https://arthaflow-web-git-feat-mobile-responsive-celvin-ams-projects.vercel.app',
-  ],
+  trustedOrigins,
 
   socialProviders: {
     google: {
