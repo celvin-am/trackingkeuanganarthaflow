@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://arthaflow-api-git-feat-mobile-responsive-celvin-ams-projects.vercel.app/api/$1"
+      "destination": "https://api-arthaflow.celvinandra.my.id/api/$1"
     },
     {
       "source": "/((?!api/|assets/|favicon.ico).*)",
