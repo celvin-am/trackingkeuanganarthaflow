@@ -1,8 +1,18 @@
 import { db } from '../lib/db.js';
 import { transactions, wallets, categories } from '../db/schema/index.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 type CreateTxnDto = {
+  walletId: string;
+  categoryId: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  description: string;
+  notes?: string;
+  date?: string | Date;
+};
+
+type UpdateTxnDto = {
   walletId: string;
   categoryId: string;
   amount: number;
@@ -26,6 +36,10 @@ function parseTransactionDate(input?: string | Date) {
 
   const parsed = new Date(input);
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+function getBalanceEffect(type: 'INCOME' | 'EXPENSE', amount: number) {
+  return type === 'INCOME' ? amount : -amount;
 }
 
 export const transactionService = {
@@ -123,7 +137,7 @@ export const transactionService = {
           })
           .returning();
 
-        const balanceChange = data.type === 'INCOME' ? amountValue : -amountValue;
+        const balanceChange = getBalanceEffect(data.type, amountValue);
 
         await tx
           .update(wallets)
@@ -136,7 +150,123 @@ export const transactionService = {
         return newTxn;
       });
     } catch (err) {
-      console.error('[txn-service]', err instanceof Error ? err.message : String(err));
+      console.error('[txn-service:create]', err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  },
+
+  async update(id: string, userId: string, data: UpdateTxnDto) {
+    try {
+      const [existingTxn] = await db
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+
+      if (!existingTxn) {
+        const error = new Error('Transaction not found');
+        (error as any).statusCode = 404;
+        throw error;
+      }
+
+      const [wallet] = await db
+        .select()
+        .from(wallets)
+        .where(and(eq(wallets.id, data.walletId), eq(wallets.userId, userId)));
+
+      if (!wallet) {
+        const error = new Error('Wallet not found or access denied');
+        (error as any).statusCode = 404;
+        throw error;
+      }
+
+      const [category] = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.id, data.categoryId));
+
+      if (!category) {
+        const error = new Error('Category not found');
+        (error as any).statusCode = 404;
+        throw error;
+      }
+
+      const amountValue = Number(data.amount);
+      if (!Number.isFinite(amountValue) || amountValue <= 0) {
+        const error = new Error('Invalid amount value');
+        (error as any).statusCode = 400;
+        throw error;
+      }
+
+      const categoryType = String((category as any).type || '').toUpperCase();
+
+      if (categoryType !== 'BOTH' && categoryType !== data.type) {
+        const error = new Error(
+          `Category type mismatch: transaction type is ${data.type} but category "${category.name}" is ${categoryType}`
+        );
+        (error as any).statusCode = 400;
+        throw error;
+      }
+
+      const oldAmountValue = Number(existingTxn.amount);
+      if (!Number.isFinite(oldAmountValue) || oldAmountValue <= 0) {
+        const error = new Error('Stored transaction amount is invalid');
+        (error as any).statusCode = 500;
+        throw error;
+      }
+
+      const oldEffect = getBalanceEffect(existingTxn.type as 'INCOME' | 'EXPENSE', oldAmountValue);
+      const newEffect = getBalanceEffect(data.type, amountValue);
+
+      return await db.transaction(async (tx) => {
+        if (existingTxn.walletId === data.walletId) {
+          const delta = newEffect - oldEffect;
+
+          await tx
+            .update(wallets)
+            .set({
+              balance: sql`CAST(COALESCE(${wallets.balance}, '0') AS NUMERIC) + ${delta}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(wallets.id, data.walletId));
+        } else {
+          // Revert old transaction effect from old wallet
+          await tx
+            .update(wallets)
+            .set({
+              balance: sql`CAST(COALESCE(${wallets.balance}, '0') AS NUMERIC) - ${oldEffect}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(wallets.id, existingTxn.walletId));
+
+          // Apply new transaction effect to new wallet
+          await tx
+            .update(wallets)
+            .set({
+              balance: sql`CAST(COALESCE(${wallets.balance}, '0') AS NUMERIC) + ${newEffect}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(wallets.id, data.walletId));
+        }
+
+        const [updatedTxn] = await tx
+          .update(transactions)
+          .set({
+            walletId: data.walletId,
+            categoryId: data.categoryId,
+            amount: amountValue.toString(),
+            type: data.type,
+            description: data.description,
+            notes: data.notes,
+            date: parseTransactionDate(data.date),
+            updatedAt: new Date(),
+          })
+          .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+          .returning();
+
+        return updatedTxn;
+      });
+    } catch (err) {
+      console.error('[txn-service:update]', err instanceof Error ? err.message : String(err));
       throw err;
     }
   },
@@ -156,7 +286,7 @@ export const transactionService = {
       await tx
         .update(wallets)
         .set({
-          balance: sql`${wallets.balance} + ${balanceChange}`,
+          balance: sql`CAST(COALESCE(${wallets.balance}, '0') AS NUMERIC) + ${balanceChange}`,
           updatedAt: new Date(),
         })
         .where(eq(wallets.id, txn.walletId));
