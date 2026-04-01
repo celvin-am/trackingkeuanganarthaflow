@@ -23,16 +23,30 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     message: 'api restored',
     time: new Date().toISOString(),
-    authLoaded: !!auth,
   });
 });
 
-app.use(cors({
-  origin: 'https://arthaflow.celvinandra.my.id',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-better-auth-id'],
-}));
+const exactAllowedOrigins = new Set([
+  'http://localhost:5173',
+  'http://192.168.100.11:5173',
+  'https://arthaflow.celvinandra.my.id',
+  'https://arthaflow-web-git-feat-mobile-responsive-celvin-ams-projects.vercel.app',
+]);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || exactAllowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-better-auth-id'],
+  })
+);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -56,5 +70,14 @@ app.use((req, res) => {
 });
 
 app.use(errorHandler);
+
+const PORT = Number(process.env.PORT || 3000);
+const isVercel = !!process.env.VERCEL;
+
+if (!isVercel) {
+  app.listen(PORT, () => {
+    console.log(`API listening on http://localhost:${PORT}`);
+  });
+}
 
 export default app;

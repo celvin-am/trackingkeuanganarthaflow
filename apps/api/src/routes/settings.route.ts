@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { settingsService } from '../services/settings.service.js';
 import multer from 'multer';
 import path from 'path';
-import { supabaseAdmin } from '../lib/supabase.js';
+import { getSupabaseAdmin } from '../lib/supabase.js';
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -56,12 +56,14 @@ settingsRouter.patch('/profile-picture', upload.single('image'), async (req, res
     const ext = path.extname(req.file.originalname || '').toLowerCase() || '.jpg';
     const filePath = `avatars/${req.user.id}-${Date.now()}${ext}`;
 
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('avatars')
-      .upload(filePath, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: true,
-      });
+    const supabaseAdmin = getSupabaseAdmin();
+
+const { error: uploadError } = await supabaseAdmin.storage
+  .from('avatars')
+  .upload(filePath, req.file.buffer, {
+    contentType: req.file.mimetype,
+    upsert: true,
+  });
 
     if (uploadError) {
       console.error('Supabase upload error:', uploadError);

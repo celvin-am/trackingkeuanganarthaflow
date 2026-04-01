@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: 'https://api-arthaflow.celvinandra.my.id/api',
+  baseURL: '/api',
   withCredentials: true,
 });
 

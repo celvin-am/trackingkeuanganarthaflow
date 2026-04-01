@@ -133,10 +133,10 @@ export function Dashboard() {
   const pieData: PieExpenseItem[] =
     safeExpenseDist.length > 0
       ? safeExpenseDist.map((d) => ({
-        categoryName: d.categoryName,
-        value: Number(d.amount),
-        colorKey: d.categoryColor ?? d.color ?? 'bg-gray-500',
-      }))
+          categoryName: d.categoryName,
+          value: Number(d.amount),
+          colorKey: d.categoryColor ?? d.color ?? 'bg-gray-500',
+        }))
       : [];
 
   const totalExpense = useMemo(() => {
@@ -170,25 +170,27 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-5 lg:space-y-8">
+      {/* Summary Cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         <div
           onClick={() => navigate('/wallets')}
-          className="bg-surface-container-lowest p-7 rounded-xl flex flex-col justify-between h-44 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20 border border-transparent"
+          className="bg-surface-container-lowest p-5 lg:p-7 rounded-2xl flex flex-col justify-between min-h-[160px] lg:h-44 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20 border border-transparent"
         >
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-3">
             <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
               {t('totalBalance')}
             </span>
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
               <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
             </div>
           </div>
-          <div>
+
+          <div className="mt-6 lg:mt-0">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <h3 className="text-2xl font-extrabold text-primary tracking-tighter">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-primary tracking-tighter break-words">
                 {formatCurrency(stats?.totalBalance ?? 0)}
               </h3>
             )}
@@ -198,21 +200,22 @@ export function Dashboard() {
 
         <div
           onClick={() => navigate('/transactions')}
-          className="bg-surface-container-low p-7 rounded-xl flex flex-col justify-between h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-green-500/20 border border-transparent"
+          className="bg-surface-container-low p-5 lg:p-7 rounded-2xl flex flex-col justify-between min-h-[160px] lg:h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-green-500/20 border border-transparent"
         >
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-3">
             <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
               {t('monthlyIncome')}
             </span>
-            <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
+            <div className="p-2 bg-green-500/10 rounded-lg text-green-500 shrink-0">
               <span className="material-symbols-outlined text-[20px]">trending_up</span>
             </div>
           </div>
-          <div>
+
+          <div className="mt-6 lg:mt-0">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <h3 className="text-2xl font-extrabold text-green-500 tracking-tighter">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-green-500 tracking-tighter break-words">
                 {formatCurrency(stats?.monthlyIncome ?? 0)}
               </h3>
             )}
@@ -222,21 +225,22 @@ export function Dashboard() {
 
         <div
           onClick={() => navigate('/transactions')}
-          className="bg-surface-container-low p-7 rounded-xl flex flex-col justify-between h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-red-500/20 border border-transparent"
+          className="bg-surface-container-low p-5 lg:p-7 rounded-2xl flex flex-col justify-between min-h-[160px] lg:h-44 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-red-500/20 border border-transparent"
         >
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-3">
             <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
               {t('monthlyExpense')}
             </span>
-            <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+            <div className="p-2 bg-red-500/10 rounded-lg text-red-500 shrink-0">
               <span className="material-symbols-outlined text-[20px]">trending_down</span>
             </div>
           </div>
-          <div>
+
+          <div className="mt-6 lg:mt-0">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <h3 className="text-2xl font-extrabold text-red-500 tracking-tighter">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-red-500 tracking-tighter break-words">
                 {formatCurrency(stats?.monthlyExpense ?? 0)}
               </h3>
             )}
@@ -246,25 +250,26 @@ export function Dashboard() {
 
         <div
           onClick={() => navigate('/budgets')}
-          className="bg-surface-container-lowest p-7 rounded-xl flex items-center justify-between h-44 shadow-sm border border-neutral-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20"
+          className="bg-surface-container-lowest p-5 lg:p-7 rounded-2xl flex items-center justify-between gap-4 min-h-[160px] lg:h-44 shadow-sm border border-neutral-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/20"
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
               {t('healthScore')}
             </span>
-            <h3 className="text-2xl font-extrabold text-on-surface mt-4 tracking-tighter">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-on-surface mt-4 tracking-tighter">
               {isLoading ? <Skeleton className="h-8 w-16 inline-block" /> : (stats?.healthScore ?? 0)}
               <span className="text-base text-neutral-400">/100</span>
             </h3>
-            <span className="inline-flex items-center px-2 py-0.5 mt-2 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
+            <span className="inline-flex w-fit items-center px-2 py-0.5 mt-2 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
               {(stats?.healthScore ?? 0) > 80
                 ? t('excellent')
                 : (stats?.healthScore ?? 0) > 50
-                  ? t('good')
-                  : t('needsWork')}
+                ? t('good')
+                : t('needsWork')}
             </span>
           </div>
-          <div className="relative w-24 h-24">
+
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 96 96">
               <circle
                 className="text-neutral-100"
@@ -289,24 +294,35 @@ export function Dashboard() {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="material-symbols-outlined text-green-500 text-3xl">verified_user</span>
+              <span className="material-symbols-outlined text-green-500 text-2xl sm:text-3xl">
+                verified_user
+              </span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-5 bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[450px]">
-          <div className="flex justify-between items-center mb-8">
-            <h4 className="text-lg font-extrabold tracking-tight">{t('expenseDistribution')}</h4>
-            <div className="relative" ref={menuRef}>
+      {/* Expense + Monthly Comparison */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 lg:gap-6">
+        {/* Expense Distribution */}
+        <div className="xl:col-span-5 bg-surface-container-lowest p-5 lg:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[420px] lg:min-h-[450px]">
+          <div className="flex items-center justify-between gap-3 mb-6 lg:mb-8">
+            <h4 className="text-base lg:text-lg font-extrabold tracking-tight">
+              {t('expenseDistribution')}
+            </h4>
+
+            <div className="relative shrink-0" ref={menuRef}>
               <button
                 onClick={() => setActiveMenu(activeMenu === 'expense' ? null : 'expense')}
-                className={`hover:bg-neutral-100 rounded-full p-1 transition-colors ${activeMenu === 'expense' ? 'bg-neutral-100' : ''
-                  }`}
+                className={`hover:bg-neutral-100 rounded-full p-1 transition-colors ${
+                  activeMenu === 'expense' ? 'bg-neutral-100' : ''
+                }`}
               >
-                <span className="material-symbols-outlined text-secondary text-[20px]">more_horiz</span>
+                <span className="material-symbols-outlined text-secondary text-[20px]">
+                  more_horiz
+                </span>
               </button>
+
               {activeMenu === 'expense' && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <button
@@ -334,7 +350,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-8 h-[300px] min-h-[300px] min-w-0 relative">
+          <div className="flex flex-col items-center xl:flex-row xl:items-center gap-6 lg:gap-8 min-h-[300px] relative">
             {expenseLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-20">
                 <Skeleton className="w-[160px] h-[160px] rounded-full" />
@@ -348,13 +364,13 @@ export function Dashboard() {
             )}
 
             {!expenseLoading && pieData.length > 0 && (
-              <div className="relative w-[300px] h-[300px] min-w-[300px] min-h-[300px] flex-shrink-0 mx-auto">
+              <div className="relative w-full max-w-[300px] sm:max-w-[300px] aspect-square flex-shrink-0 mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={58}
+                      outerRadius={86}
                       paddingAngle={5}
                       dataKey="value"
                       animationBegin={0}
@@ -378,6 +394,7 @@ export function Dashboard() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-[10px] text-secondary font-bold uppercase">{t('total')}</span>
                   <span className="text-lg font-black">100%</span>
@@ -385,21 +402,25 @@ export function Dashboard() {
               </div>
             )}
 
-            <div className="w-full flex-1 min-w-0 space-y-3 max-h-full overflow-y-auto pr-2 scrollbar-hide">
+            <div className="w-full min-w-0 flex-1 space-y-3 max-h-full overflow-y-auto pr-1">
               {safeExpenseDist.map((item) => {
                 const percentage = totalExpense > 0 ? ((item.amount / totalExpense) * 100).toFixed(1) : 0;
                 return (
-                  <div key={item.categoryName} className="flex items-center justify-between group cursor-default">
-                    <div className="flex items-center gap-3">
+                  <div
+                    key={item.categoryName}
+                    className="flex items-center justify-between gap-3 group cursor-default"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="w-2.5 h-2.5 rounded-full shadow-sm"
+                        className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0"
                         style={{ backgroundColor: tailwindToHex(item.categoryColor || item.color) }}
                       />
-                      <span className="text-[13px] font-bold text-on-surface truncate max-w-[120px]">
+                      <span className="text-[13px] font-bold text-on-surface truncate">
                         {item.categoryName}
                       </span>
                     </div>
-                    <div className="text-right">
+
+                    <div className="text-right shrink-0">
                       <p className="text-[13px] font-extrabold text-primary">
                         {formatCurrency(Number(item.amount))}
                       </p>
@@ -412,10 +433,14 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="col-span-12 lg:col-span-7 bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[450px]">
-          <div className="flex justify-between items-center mb-8">
-            <h4 className="text-lg font-extrabold tracking-tight">{t('monthlyComparison')}</h4>
-            <div className="flex gap-4">
+        {/* Monthly Comparison */}
+        <div className="xl:col-span-7 bg-surface-container-lowest p-5 lg:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 relative min-h-[420px] lg:min-h-[450px]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 lg:mb-8">
+            <h4 className="text-base lg:text-lg font-extrabold tracking-tight">
+              {t('monthlyComparison')}
+            </h4>
+
+            <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-sm bg-green-500" />
                 <span className="text-[10px] font-bold text-secondary uppercase">{t('income')}</span>
@@ -427,7 +452,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="h-[300px] min-h-[300px] pt-4 w-full min-w-0 relative">
+          <div className="h-[260px] sm:h-[300px] min-h-[260px] sm:min-h-[300px] pt-2 sm:pt-4 w-full min-w-0 relative">
             {trendLoading && (
               <div className="absolute inset-0 flex items-end gap-2 px-4 pb-4 z-10">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -444,7 +469,7 @@ export function Dashboard() {
 
             {!trendLoading && safeBalanceTrend.length > 0 && (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={safeBalanceTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <BarChart data={safeBalanceTrend} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
                   <XAxis
                     dataKey="month"
                     axisLine={false}
@@ -460,8 +485,8 @@ export function Dashboard() {
                     }}
                     formatter={(value: any) => formatCurrency(Number(value))}
                   />
-                  <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} animationDuration={600} />
-                  <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} animationDuration={600} />
+                  <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={18} animationDuration={600} />
+                  <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={18} animationDuration={600} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -469,22 +494,24 @@ export function Dashboard() {
         </div>
       </section>
 
-      <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden min-h-[450px]">
-        <div className="flex justify-between items-center mb-8 relative z-10">
+      {/* Balance Trend */}
+      <section className="bg-surface-container-lowest p-5 lg:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden min-h-[420px] lg:min-h-[450px]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 relative z-10">
           <div>
-            <h4 className="text-lg font-extrabold tracking-tight">{t('balanceTrend')}</h4>
+            <h4 className="text-base lg:text-lg font-extrabold tracking-tight">{t('balanceTrend')}</h4>
             <p className="text-xs text-secondary mt-0.5">{t('realTimePortfolio')}</p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-start sm:self-auto">
             {(['1W', '1M', '1Y'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition-colors ${selectedRange === range
+                className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${
+                  selectedRange === range
                     ? 'bg-primary text-white shadow-lg shadow-primary/20'
                     : 'bg-neutral-100 hover:bg-neutral-200'
-                  }`}
+                }`}
               >
                 {range}
               </button>
@@ -492,7 +519,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="h-[300px] min-h-[300px] w-full min-w-0 relative">
+        <div className="h-[260px] sm:h-[300px] min-h-[260px] sm:min-h-[300px] w-full min-w-0 relative">
           {trendLoading && debouncedRange !== selectedRange && (
             <div className="absolute top-2 right-2 z-10">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
@@ -515,7 +542,7 @@ export function Dashboard() {
 
           {!trendLoading && safeBalanceTrend.length > 0 && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={safeBalanceTrend} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={safeBalanceTrend} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />

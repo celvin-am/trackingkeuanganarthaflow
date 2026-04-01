@@ -1,6 +1,6 @@
 import { db } from '../lib/db.js';
 import { budgets, transactions, categories } from '../db/schema/index.js';
-import { eq, and, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, sql, gte, lt } from 'drizzle-orm';
 
 type CreateBudgetDto = {
   categoryId: string;
@@ -9,13 +9,23 @@ type CreateBudgetDto = {
   year: number;
 };
 
+const JAKARTA_OFFSET_HOURS = 7;
+
+function getJakartaMonthRangeUtc(month: number, year: number) {
+  const startUtc = new Date(Date.UTC(year, month - 1, 1, -JAKARTA_OFFSET_HOURS, 0, 0, 0));
+  const nextMonthStartUtc = new Date(Date.UTC(year, month, 1, -JAKARTA_OFFSET_HOURS, 0, 0, 0));
+
+  return {
+    startUtc,
+    nextMonthStartUtc,
+  };
+}
+
 export const budgetService = {
   async findAll(userId: string, month: number, year: number) {
-    // Start/End of month for filtering transactions
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    const endDate = new Date(year, month, 0, 23, 59, 59).toISOString();
+    const { startUtc, nextMonthStartUtc } = getJakartaMonthRangeUtc(month, year);
 
-    return db
+    const budgetRows = await db
       .select({
         id: budgets.id,
         categoryId: budgets.categoryId,
@@ -25,18 +35,6 @@ export const budgetService = {
         limitAmount: budgets.limitAmount,
         month: budgets.month,
         year: budgets.year,
-        // Calculate spent amount by aggregating transactions for this category in this month
-        spent: sql<number>`
-          COALESCE(
-            (SELECT sum(CAST(amount AS numeric))
-             FROM transaction t 
-             WHERE t.category_id = budget.category_id 
-             AND t.user_id = budget.user_id
-             AND EXTRACT(MONTH FROM t.date) = ${month}
-             AND EXTRACT(YEAR FROM t.date) = ${year}
-             AND t.type = 'EXPENSE'), 0
-          )
-        `,
       })
       .from(budgets)
       .innerJoin(categories, eq(budgets.categoryId, categories.id))
@@ -47,22 +45,63 @@ export const budgetService = {
           eq(budgets.year, year)
         )
       );
+
+    if (budgetRows.length === 0) {
+      return [];
+    }
+
+    const spendingRows = await db
+      .select({
+        categoryId: transactions.categoryId,
+        spent: sql<number>`CAST(SUM(${transactions.amount}) AS NUMERIC)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, 'EXPENSE'),
+          gte(transactions.date, startUtc),
+          lt(transactions.date, nextMonthStartUtc)
+        )
+      )
+      .groupBy(transactions.categoryId);
+
+    const spentMap = new Map<string, number>();
+
+    for (const row of spendingRows) {
+      if (!row.categoryId) continue;
+      spentMap.set(row.categoryId, Number(row.spent || 0));
+    }
+
+    return budgetRows.map((budget) => ({
+      ...budget,
+      spent: spentMap.get(budget.categoryId) || 0,
+    }));
   },
 
   async create(userId: string, data: CreateBudgetDto) {
     const [budget] = await db
       .insert(budgets)
-      .values({ ...data, userId, limitAmount: data.limitAmount.toString() })
+      .values({
+        ...data,
+        userId,
+        limitAmount: data.limitAmount.toString(),
+      })
       .returning();
+
     return budget;
   },
 
   async update(id: string, userId: string, limitAmount: number) {
     const [budget] = await db
       .update(budgets)
-      .set({ limitAmount: limitAmount.toString(), updatedAt: new Date() })
+      .set({
+        limitAmount: limitAmount.toString(),
+        updatedAt: new Date(),
+      })
       .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
       .returning();
+
     return budget;
   },
 
@@ -71,6 +110,7 @@ export const budgetService = {
       .delete(budgets)
       .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
       .returning();
+
     return deleted;
   },
 };

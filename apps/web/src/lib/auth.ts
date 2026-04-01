@@ -1,9 +1,9 @@
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
-  baseURL: "https://api-arthaflow.celvinandra.my.id",
+  baseURL: '',
   fetchOptions: {
-    credentials: "include",
+    credentials: 'include',
   },
 });
 

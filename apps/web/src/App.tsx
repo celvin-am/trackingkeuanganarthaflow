@@ -13,6 +13,8 @@ import { SettingsProvider } from './lib/SettingsContext';
 import { LanguageProvider } from './lib/LanguageContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { MobileTopBar } from './components/layout/MobileTopBar';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { GlobalFAB } from './components/GlobalFAB';
 
 const queryClient = new QueryClient();
@@ -24,20 +26,30 @@ function App() {
         <LanguageProvider>
           <QueryClientProvider client={queryClient}>
             <Routes>
-              {/* Public Routes */}
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
-              
-              {/* Protected Apps Routes */}
+
               <Route
                 path="/*"
                 element={
                   <ProtectedRoute>
                     <div className="min-h-screen bg-surface flex">
-                      <Sidebar />
-                      <main className="flex-1 ml-[260px] flex flex-col min-h-screen">
-                        <Header />
-                        <div className="flex-1 p-10 overflow-y-auto">
+                      {/* Desktop Sidebar */}
+                      <div className="hidden lg:block">
+                        <Sidebar />
+                      </div>
+
+                      {/* Main content */}
+                      <main className="flex min-h-screen flex-1 flex-col lg:ml-[260px]">
+                        {/* Desktop Header */}
+                        <div className="hidden lg:block">
+                          <Header />
+                        </div>
+
+                        {/* Mobile Header */}
+                        <MobileTopBar />
+
+                        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-24 md:px-6 lg:p-10 lg:pb-10">
                           <Routes>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/transactions" element={<Transactions />} />
@@ -47,9 +59,16 @@ function App() {
                             <Route path="/scan" element={<Scan />} />
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                           </Routes>
-                          <GlobalFAB />
+
+                          {/* FAB only for desktop */}
+                          <div className="hidden lg:block">
+                            <GlobalFAB />
+                          </div>
                         </div>
                       </main>
+
+                      {/* Mobile Bottom Navigation */}
+                      <MobileBottomNav />
                     </div>
                   </ProtectedRoute>
                 }
