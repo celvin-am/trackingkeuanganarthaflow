@@ -1,9 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
+
+type ScanType = 'INCOME' | 'EXPENSE';
+
+type ScanResult = {
+  merchant?: string;
+  date?: string;
+  amount?: number;
+  description?: string;
+  walletId: string;
+  categoryId: string;
+  type: ScanType;
+};
+
+function getJakartaTodayString() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
 
 export function Scan() {
   const navigate = useNavigate();
@@ -13,7 +34,7 @@ export function Scan() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const { data: categories = [] } = useQuery({
@@ -25,6 +46,27 @@ export function Scan() {
     queryKey: ['wallets'],
     queryFn: async () => (await apiClient.get('/wallets')).data,
   });
+
+  const filteredCategories = useMemo(() => {
+    if (!scanResult) return [];
+
+    return categories.filter((c: any) => {
+      const categoryType = String(c.type || '').toUpperCase();
+      return categoryType === scanResult.type || categoryType === 'BOTH';
+    });
+  }, [categories, scanResult]);
+
+  useEffect(() => {
+    if (!scanResult) return;
+
+    const categoryStillValid = filteredCategories.some(
+      (category: any) => category.id === scanResult.categoryId
+    );
+
+    if (!categoryStillValid && scanResult.categoryId) {
+      setScanResult((prev) => (prev ? { ...prev, categoryId: '' } : prev));
+    }
+  }, [filteredCategories, scanResult]);
 
   const applySelectedFile = (selected: File) => {
     setFile(selected);
@@ -54,11 +96,13 @@ export function Scan() {
       });
 
       setScanResult({
-        ...res.data,
+        merchant: res.data.merchant || '',
+        description: res.data.description || '',
+        amount: Number(res.data.amount || 0),
+        date: res.data.date || getJakartaTodayString(),
+        type: res.data.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
         categoryId: '',
         walletId: wallets.length > 0 ? wallets[0].id : '',
-        type: 'EXPENSE',
-        date: res.data.date || new Date().toISOString().split('T')[0],
       });
     } catch (err) {
       console.error('OCR failed', err);
@@ -78,8 +122,9 @@ export function Scan() {
         type: scanResult.type,
         categoryId: scanResult.categoryId,
         walletId: scanResult.walletId,
-        description: `${scanResult.merchant} - ${scanResult.description || t('receiptScan')}`,
-        date: new Date(scanResult.date),
+        description:
+          `${scanResult.merchant} - ${scanResult.description || t('receiptScan')}`.trim(),
+        date: scanResult.date,
       });
 
       await Promise.all([
@@ -92,9 +137,13 @@ export function Scan() {
       ]);
 
       navigate('/transactions');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed saving transaction', err);
-      alert(t('saveTransactionFailed'));
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        t('saveTransactionFailed');
+      alert(message);
     } finally {
       setIsSaving(false);
     }
@@ -131,7 +180,6 @@ export function Scan() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-8">
-        {/* Upload Panel */}
         <div className="lg:col-span-5">
           <div className="flex h-full flex-col rounded-3xl border border-neutral-100 bg-surface-container-lowest p-5 shadow-sm lg:p-8">
             <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold">
@@ -198,7 +246,6 @@ export function Scan() {
                 )}
               </label>
 
-              {/* Proper mobile actions */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-bold text-on-surface transition-colors hover:border-primary hover:bg-primary/5">
                   <span className="material-symbols-outlined text-[20px] text-primary">
@@ -251,7 +298,6 @@ export function Scan() {
           </div>
         </div>
 
-        {/* Results Panel */}
         <div className="lg:col-span-7">
           <AnimatePresence mode="wait">
             {!scanResult ? (
@@ -314,7 +360,9 @@ export function Scan() {
                       <input
                         type="text"
                         value={scanResult.merchant || ''}
-                        onChange={(e) => setScanResult({ ...scanResult, merchant: e.target.value })}
+                        onChange={(e) =>
+                          setScanResult({ ...scanResult, merchant: e.target.value })
+                        }
                         className="w-full rounded-2xl border border-neutral-200 bg-surface-container-low px-5 py-3.5 text-base font-bold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary"
                         placeholder={t('merchantPlaceholder')}
                       />
@@ -375,38 +423,23 @@ export function Scan() {
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block px-1 text-[10px] font-bold uppercase tracking-widest text-secondary">
-                        {t('selectCategory')} <span className="text-red-500">*</span>
+                      <label className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-widest text-secondary">
+                        {t('type')}
                       </label>
                       <select
-                        required
-                        value={scanResult.categoryId}
+                        value={scanResult.type}
                         onChange={(e) =>
                           setScanResult({
                             ...scanResult,
-                            categoryId: e.target.value,
+                            type: e.target.value as ScanType,
+                            categoryId: '',
                           })
                         }
-                        className={`w-full appearance-none rounded-2xl px-5 py-3.5 text-base font-bold text-on-surface outline-none transition-all lg:text-sm ${
-                          !scanResult.categoryId
-                            ? 'border border-red-300 bg-surface-container-low ring-2 ring-red-50/50'
-                            : 'border border-neutral-200 bg-surface-container-low focus:border-primary focus:ring-1 focus:ring-primary'
-                        }`}
+                        className="w-full appearance-none rounded-2xl border border-neutral-200 bg-surface-container-low px-5 py-3.5 text-base font-bold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary lg:text-sm"
                       >
-                        <option value="" disabled>
-                          {t('selectCategory')}
-                        </option>
-                        {categories.map((c: any) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
+                        <option value="EXPENSE">{t('expenseType')}</option>
+                        <option value="INCOME">{t('incomeType')}</option>
                       </select>
-                      {!scanResult.categoryId && (
-                        <p className="mt-1 px-1 text-[10px] font-bold text-red-500">
-                          {t('categoryRequired')}
-                        </p>
-                      )}
                     </div>
 
                     <div>
@@ -432,6 +465,41 @@ export function Scan() {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="lg:col-span-2">
+                      <label className="mb-1.5 block px-1 text-[10px] font-bold uppercase tracking-widest text-secondary">
+                        {t('selectCategory')} <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={scanResult.categoryId}
+                        onChange={(e) =>
+                          setScanResult({
+                            ...scanResult,
+                            categoryId: e.target.value,
+                          })
+                        }
+                        className={`w-full appearance-none rounded-2xl px-5 py-3.5 text-base font-bold text-on-surface outline-none transition-all lg:text-sm ${
+                          !scanResult.categoryId
+                            ? 'border border-red-300 bg-surface-container-low ring-2 ring-red-50/50'
+                            : 'border border-neutral-200 bg-surface-container-low focus:border-primary focus:ring-1 focus:ring-primary'
+                        }`}
+                      >
+                        <option value="" disabled>
+                          {t('selectCategory')}
+                        </option>
+                        {filteredCategories.map((c: any) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      {!scanResult.categoryId && (
+                        <p className="mt-1 px-1 text-[10px] font-bold text-red-500">
+                          {t('categoryRequired')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
