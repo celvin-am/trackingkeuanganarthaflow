@@ -10,6 +10,7 @@ export function Transactions() {
   const { formatCurrency, formatDate } = useSettings();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
 
@@ -24,6 +25,7 @@ export function Transactions() {
       setDebouncedSearch(searchTerm);
       setPage(1);
     }, 500);
+
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -48,7 +50,7 @@ export function Transactions() {
 
   const transactions = response?.data || [];
   const total = response?.total || 0;
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const handleDelete = async (id: string) => {
     if (confirm(t('confirm'))) {
@@ -65,24 +67,29 @@ export function Transactions() {
   };
 
   return (
-    <div className="space-y-5 lg:space-y-8">
+    <div className="space-y-5 px-4 pb-[calc(112px+env(safe-area-inset-bottom))] pt-1 sm:px-5 lg:space-y-8 lg:px-0 lg:pb-0">
       {/* Page Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs text-secondary font-medium mb-1">
+          <p className="mb-1 text-xs font-medium text-secondary">
             {t('dashboard')} / <span className="text-on-surface">{t('transactions')}</span>
           </p>
-          <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">
+
+          <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">
             {t('transactions')}
           </h1>
-          <p className="text-sm text-secondary mt-1">
+
+          <p className="mt-1 text-sm text-secondary">
             {t('transactionsDescription')}
           </p>
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex min-h-[48px] w-full lg:w-auto items-center justify-center gap-2 rounded-xl bg-primary-container px-5 py-3 text-base lg:text-sm font-bold text-white transition-opacity hover:opacity-90"
+          onClick={() => {
+            setEditingTransaction(null);
+            setIsModalOpen(true);
+          }}
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary-container px-5 py-3 text-base font-bold text-white transition-opacity hover:opacity-90 lg:w-auto lg:text-sm"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
           {t('addTransaction')}
@@ -102,7 +109,7 @@ export function Transactions() {
       {/* Filter Bar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="flex min-h-[48px] w-full items-center gap-2 rounded-xl border border-neutral-200 bg-surface-container-lowest px-4 py-2.5 text-base md:w-auto">
-          <span className="material-symbols-outlined text-secondary text-[18px] shrink-0">
+          <span className="material-symbols-outlined shrink-0 text-[18px] text-secondary">
             search
           </span>
           <input
@@ -110,7 +117,7 @@ export function Transactions() {
             placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-transparent text-base outline-none placeholder:text-neutral-400 md:w-64"
+            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-neutral-400 md:w-64"
           />
         </div>
 
@@ -120,7 +127,7 @@ export function Transactions() {
             setSelectedCategory(e.target.value);
             setPage(1);
           }}
-          className="min-h-[48px] w-full rounded-xl border border-neutral-200 bg-surface-container-lowest px-4 py-2.5 text-base md:w-auto md:text-sm font-semibold text-secondary outline-none transition-colors cursor-pointer focus:border-primary"
+          className="min-h-[48px] w-full cursor-pointer rounded-xl border border-neutral-200 bg-surface-container-lowest px-4 py-2.5 text-base font-semibold text-secondary outline-none transition-colors focus:border-primary md:w-auto md:text-sm"
         >
           <option value="">
             {t('all')} {t('categories')}
@@ -136,11 +143,11 @@ export function Transactions() {
       {/* Mobile List */}
       <div className="space-y-3 lg:hidden">
         {isLoading ? (
-          <div className="rounded-2xl border border-neutral-200 bg-surface-container-lowest p-6 text-center text-secondary text-sm">
+          <div className="rounded-2xl border border-neutral-200 bg-surface-container-lowest p-6 text-center text-sm text-secondary">
             {t('loading')}
           </div>
         ) : transactions.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-200 bg-surface-container-lowest p-6 text-center text-secondary text-sm">
+          <div className="rounded-2xl border border-neutral-200 bg-surface-container-lowest p-6 text-center text-sm text-secondary">
             {t('noData')}
           </div>
         ) : (
@@ -159,40 +166,41 @@ export function Transactions() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block bg-surface-container-lowest rounded-xl shadow-sm overflow-x-auto border border-neutral-100">
-        <table className="w-full text-left border-collapse min-w-[800px]">
+      <div className="hidden overflow-x-auto rounded-xl border border-neutral-100 bg-surface-container-lowest shadow-sm lg:block">
+        <table className="min-w-[800px] w-full border-collapse text-left">
           <thead>
-            <tr className="bg-surface-container-low/50 border-b border-neutral-100">
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-left">
+            <tr className="border-b border-neutral-100 bg-surface-container-low/50">
+              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('date')}
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-left">
+              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('description')}
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-left">
+              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('category')}
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-left">
+              <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('wallet')}
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-right">
+              <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('amount')}
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-secondary uppercase tracking-widest text-center">
+              <th className="px-6 py-4 text-center text-[10px] font-bold uppercase tracking-widest text-secondary">
                 {t('actions')}
               </th>
             </tr>
           </thead>
+
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-secondary text-sm">
+                <td colSpan={6} className="p-8 text-center text-sm text-secondary">
                   {t('loading')}
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-secondary text-sm">
+                <td colSpan={6} className="p-8 text-center text-sm text-secondary">
                   {t('noData')}
                 </td>
               </tr>
@@ -201,7 +209,10 @@ export function Transactions() {
                 const formattedDate = formatDate(tx.date || tx.createdAt);
                 const formattedTime = new Date(tx.date || tx.createdAt).toLocaleTimeString(
                   'en-US',
-                  { hour: '2-digit', minute: '2-digit' }
+                  {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }
                 );
 
                 const catName = tx.category?.name || t('uncategorized');
@@ -211,59 +222,58 @@ export function Transactions() {
                 return (
                   <tr
                     key={tx.id}
-                    className="border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors group"
+                    className="group border-b border-neutral-50 transition-colors hover:bg-neutral-50/50"
                   >
-                    <td className="px-6 py-4 align-middle">
-                      <p className="text-sm font-bold text-on-surface whitespace-nowrap">
+                    <td className="align-middle px-6 py-4">
+                      <p className="whitespace-nowrap text-sm font-bold text-on-surface">
                         {formattedDate}
                       </p>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">
-                        {formattedTime}
-                      </p>
+                      <p className="mt-0.5 text-[10px] text-neutral-400">{formattedTime}</p>
                     </td>
 
-                    <td className="px-6 py-4 align-middle max-w-[250px]">
+                    <td className="max-w-[250px] align-middle px-6 py-4">
                       <p
-                        className="text-sm font-semibold text-on-surface truncate"
+                        className="truncate text-sm font-semibold text-on-surface"
                         title={tx.description}
                       >
                         {tx.description}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
+
+                      <div className="mt-0.5 flex items-center gap-1.5">
                         {tx.recurringTxnId && (
                           <span
-                            className="material-symbols-outlined text-[14px] text-primary animate-pulse"
+                            className="material-symbols-outlined animate-pulse text-[14px] text-primary"
                             title={t('recurring')}
                           >
                             sync
                           </span>
                         )}
-                        <p className="text-xs text-secondary whitespace-nowrap">
+                        <p className="whitespace-nowrap text-xs text-secondary">
                           {tx.recurringTxnId ? t('recurring') : t('manualEntry')}
                         </p>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 align-middle">
+                    <td className="align-middle px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase whitespace-nowrap ${colorClass}`}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase whitespace-nowrap text-white ${colorClass}`}
                       >
                         {catName}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 align-middle">
+                    <td className="align-middle px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-neutral-400" />
-                        <span className="text-sm text-secondary whitespace-nowrap">
+                        <div className="h-2 w-2 rounded-full bg-neutral-400" />
+                        <span className="whitespace-nowrap text-sm text-secondary">
                           {walletName}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 align-middle text-right">
+                    <td className="align-middle px-6 py-4 text-right">
                       <span
-                        className={`text-sm font-bold whitespace-nowrap ${
+                        className={`whitespace-nowrap text-sm font-bold ${
                           tx.type === 'INCOME' ? 'text-green-500' : 'text-red-500'
                         }`}
                       >
@@ -272,21 +282,22 @@ export function Transactions() {
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 align-middle text-center">
-                      <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="align-middle px-6 py-4 text-center">
+                      <div className="flex justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <button
                           onClick={() => handleEdit(tx)}
-                          className="p-1.5 hover:bg-neutral-200 rounded-lg transition-colors outline-none cursor-pointer"
+                          className="cursor-pointer rounded-lg p-1.5 outline-none transition-colors hover:bg-neutral-200"
                         >
-                          <span className="material-symbols-outlined text-secondary text-[16px]">
+                          <span className="material-symbols-outlined text-[16px] text-secondary">
                             edit
                           </span>
                         </button>
+
                         <button
                           onClick={() => handleDelete(tx.id)}
-                          className="p-1.5 hover:bg-red-100 rounded-lg transition-colors outline-none cursor-pointer"
+                          className="cursor-pointer rounded-lg p-1.5 outline-none transition-colors hover:bg-red-100"
                         >
-                          <span className="material-symbols-outlined text-red-500 text-[16px]">
+                          <span className="material-symbols-outlined text-[16px] text-red-500">
                             delete
                           </span>
                         </button>
@@ -301,18 +312,18 @@ export function Transactions() {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-secondary">
           {t('total')}: <span className="font-bold text-on-surface">{total}</span>
         </p>
 
-        <div className="flex items-center justify-between sm:justify-end gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
           <button
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <span className="material-symbols-outlined text-secondary text-[18px]">
+            <span className="material-symbols-outlined text-[18px] text-secondary">
               chevron_left
             </span>
           </button>
@@ -322,16 +333,16 @@ export function Transactions() {
               {t('page')} {page}
             </span>
             <span className="text-sm text-secondary">
-              {t('of')} {Math.max(1, totalPages)}
+              {t('of')} {totalPages}
             </span>
           </div>
 
           <button
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <span className="material-symbols-outlined text-secondary text-[18px]">
+            <span className="material-symbols-outlined text-[18px] text-secondary">
               chevron_right
             </span>
           </button>
