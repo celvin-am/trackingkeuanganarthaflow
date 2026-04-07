@@ -116,16 +116,6 @@ export const transactionService = {
         throw error;
       }
 
-      const categoryType = String((category as any).type || '').toUpperCase();
-
-      if (categoryType !== 'BOTH' && categoryType !== data.type) {
-        const error = new Error(
-          `Category type mismatch: transaction type is ${data.type} but category "${category.name}" is ${categoryType}`
-        );
-        (error as any).statusCode = 400;
-        throw error;
-      }
-
       return await db.transaction(async (tx) => {
         const [newTxn] = await tx
           .insert(transactions)
@@ -197,16 +187,6 @@ export const transactionService = {
         throw error;
       }
 
-      const categoryType = String((category as any).type || '').toUpperCase();
-
-      if (categoryType !== 'BOTH' && categoryType !== data.type) {
-        const error = new Error(
-          `Category type mismatch: transaction type is ${data.type} but category "${category.name}" is ${categoryType}`
-        );
-        (error as any).statusCode = 400;
-        throw error;
-      }
-
       const oldAmountValue = Number(existingTxn.amount);
       if (!Number.isFinite(oldAmountValue) || oldAmountValue <= 0) {
         const error = new Error('Stored transaction amount is invalid');
@@ -229,7 +209,6 @@ export const transactionService = {
             })
             .where(eq(wallets.id, data.walletId));
         } else {
-          // Revert old transaction effect from old wallet
           await tx
             .update(wallets)
             .set({
@@ -238,7 +217,6 @@ export const transactionService = {
             })
             .where(eq(wallets.id, existingTxn.walletId));
 
-          // Apply new transaction effect to new wallet
           await tx
             .update(wallets)
             .set({
